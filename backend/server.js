@@ -4,6 +4,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import connectDB from './config/db.js'; // Ensure db.js also uses ES module exports
 import authRoute from "./routes/authRoute.js"
+import  protect  from './middleware/authMiddleware.js';
+import sessionRoute from './routes/sessionRoute.js'
+import questionRoute from './routes/questionRoute.js'
+import { generateInterviewQuestions, generateConceptExplanation } from './controller/aiController.js';
+
 dotenv.config();
 
 const app = express();
@@ -29,7 +34,7 @@ app.use("/api/auth",authRoute);
 app.use("/api/sessions",sessionRoute);
 app.use("/api/questions",questionRoute);
 
-app.use('/api/ai/generate-questions',protect, generateInterviewQuestion);
+app.use('/api/ai/generate-questions',protect, generateInterviewQuestions);
 app.use('api/ai/generate-explanations',protect,generateConceptExplanation);
 
 // Routes

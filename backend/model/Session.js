@@ -1,34 +1,35 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const sessionSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Reference to the user who owns the session
-      required: true,
-    },
-    role: {
-      type: String,
-      required: true,
-    },
-    experience: {
-      type: String,
-      required: true,
-    },
-    topicsToFocus: {
-      type: String,
-      required: true,
-    },
-    description:String,
-    question:{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Question", 
-      required: true,
-    }
+const sessionSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  {
-    timestamps: true, 
-  }
-);
+  role: {
+    type: String,
+    required: true
+  },
+  experience: {
+    type: String,
+    required: true
+  },
+  topicsToFocus: {
+    type: [String], // ✅ Array of strings, not single string
+    default: []
+  },
+  description: {
+    type: String,
+    default: ''
+  },
+  questions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Question'
+  }] // ✅ Not required, can be empty initially
+}, {
+  timestamps: true
+});
 
-export default mongoose.model("Session", sessionSchema);
+const Session = mongoose.model('Session', sessionSchema);
+
+export default Session;
