@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { APP_FEATURES } from "../utils/data";
 import { Hero } from "../assets/asset";
@@ -6,14 +6,20 @@ import { LuSparkles } from "react-icons/lu";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import Model from "../components/Model";
+import { UserContext } from "../context/userContext";
+import ProfileInfoCard from "../components/Cards/ProfileInfoCard";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [openAuthModal, setOpenAuthModal] = useState(false);
+  const { user } = useContext(UserContext);
   const [currentPage, setCurrentPage] = useState("login");
 
   const handleCTA = () => {
-    setOpenAuthModal(true);
+    if (!user) setOpenAuthModal(true);
+    else {
+      navigate("/dashboard");
+    }
   };
 
   return (
@@ -24,12 +30,16 @@ const LandingPage = () => {
           <h1 className="text-xl md:text-2xl font-bold text-gray-800">
             Interview Prep AI
           </h1>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-            onClick={() => setOpenAuthModal(true)}
-          >
-            Login / Sign Up
-          </button>
+          {user ? (
+            <ProfileInfoCard />
+          ) : (
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              onClick={() => setOpenAuthModal(true)}
+            >
+              Login / Sign Up
+            </button>
+          )}
         </header>
 
         {/* Hero Section */}

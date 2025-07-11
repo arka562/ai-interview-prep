@@ -7,7 +7,7 @@ import authRoute from "./routes/authRoute.js"
 import  protect  from './middleware/authMiddleware.js';
 import sessionRoute from './routes/sessionRoute.js'
 import questionRoute from './routes/questionRoute.js'
-import { generateInterviewQuestions, generateConceptExplanation } from './controller/aiController.js';
+import { generateInterviewQuestions,generateConceptExplanation } from './controller/aiController.js';
 
 dotenv.config();
 
@@ -35,7 +35,7 @@ app.use("/api/sessions",sessionRoute);
 app.use("/api/questions",questionRoute);
 
 app.use('/api/ai/generate-questions',protect, generateInterviewQuestions);
-app.use('api/ai/generate-explanations',protect,generateConceptExplanation);
+app.use('/api/ai/generate-explanations',protect,generateConceptExplanation);
 
 // Routes
 app.get('/', (req, res) => {

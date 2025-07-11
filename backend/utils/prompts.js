@@ -1,72 +1,105 @@
-// Generate prompt for interview questions based on role, experience, and topics
-export const questionAnswerPrompt = (role, experience, topics) => {
-  const experienceLevel = getExperienceLevel(experience);
-  const topicsList = topics.length > 0 ? topics.join(", ") : "general technical skills";
+// Helper function to standardize experience levels
+const getExperienceLevel = (experience) => {
+  if (typeof experience === 'string') {
+    const exp = experience.toLowerCase();
+    if (exp.includes('entry') || exp.includes('junior') || exp.includes('fresher') || exp.includes('0-2')) {
+      return 'entry-level';
+    } else if (exp.includes('mid') || exp.includes('intermediate') || exp.includes('2-5')) {
+      return 'mid-level';
+    } else if (exp.includes('senior') || exp.includes('5+') || exp.includes('expert') || exp.includes('lead')) {
+      return 'senior';
+    }
+  }
   
-  return `
-You are a senior technical interviewer with 10+ years of experience hiring for ${role} positions.
-
-Generate 5 high-quality, realistic interview questions for a ${experienceLevel} ${role} candidate.
-
-**Focus Areas:** ${topicsList}
-
-**Requirements:**
-- Questions should be appropriate for ${experienceLevel} level
-- Mix of conceptual, practical, and problem-solving questions
-- Questions should test both depth and breadth of knowledge
-- Include at least one scenario-based or behavioral question
-- Avoid overly theoretical questions; focus on practical application
-
-**For each question, provide:**
-1. **Question:** Clear, specific, and realistic
-2. **Model Answer:** Comprehensive answer that demonstrates strong understanding
-3. **Key Points:** 3-4 essential points the candidate should cover
-4. **Follow-up:** One potential follow-up question an interviewer might ask
-
-**Format:**
-Q1: [Question]
-A1: [Model Answer]
-Key Points: [Key points to cover]
-Follow-up: [Follow-up question]
-
-Q2: [Question]
-A2: [Model Answer]
-Key Points: [Key points to cover]
-Follow-up: [Follow-up question]
-
-[Continue for all 5 questions]
-
-**Note:** Ensure questions progress from fundamental concepts to more advanced topics, reflecting a real interview flow.
-`;
+  // Try to parse as number
+  const expNum = parseInt(experience);
+  if (!isNaN(expNum)) {
+    if (expNum <= 2) return 'entry-level';
+    if (expNum <= 5) return 'mid-level';
+    return 'senior';
+  }
+  
+  return experience || 'mid-level'; // Default fallback
 };
 
+// Generate prompt for interview questions based on role, experience, and topics
+export const questionAnswerPrompt = (role, experience, topicsToFocus, numberOfQuestions = 5) => {
+  if (!role || !experience) {
+    throw new Error('Role and experience are required parameters');
+  }
+
+  const experienceLevel = getExperienceLevel(experience);
+  const topicsList = topicsToFocus && topicsToFocus.length > 0 
+    ? topicsToFocus.join(", ") 
+    : "general technical skills";
+  
+  const questionCount = Math.min(Math.max(numberOfQuestions, 1), 10);
+
+  return {
+    promptTitle: `Interview Question Generator`,
+    context: {
+      role,
+      experienceLevel,
+      focusAreas: topicsList,
+      questionCount
+    },
+    instructions: [
+      `You are a senior technical interviewer with 10+ years of experience hiring for ${role} positions.`,
+      `Generate ${questionCount} high-quality interview questions for a ${experienceLevel} ${role} candidate.`,
+      `Ensure a mix of 40% conceptual, 40% practical, and 20% problem-solving/behavioral.`,
+      `Include real-world scenarios relevant to the ${role}.`,
+      `At least one scenario-based question if ${questionCount} >= 3.`,
+      `Avoid overly theoretical questions and prioritize practical application.`,
+      `Progress from basic to advanced topics.`,
+      `Make questions specific enough to avoid generic answers.`,
+      `Focus on ${experienceLevel === 'entry-level' ? 'fundamentals and learning ability' : experienceLevel === 'mid-level' ? 'practical problem-solving' : 'system design and leadership skills'}.`
+    ],
+    format: {
+      question: "Q[Number]: [Clear, specific question]",
+      idealAnswer: "[Comprehensive model answer]",
+      keyPoints: ["• [Point 1]", "• [Point 2]", "• [Point 3]"],
+      followUpQuestion: "[Related follow-up question]",
+      evaluationCriteria: "[Guidance on scoring based on depth, clarity, and accuracy]"
+    },
+    note: "Begin generating the questions based on the structure and context provided."
+  };
+};
+
+
 // Generate prompt to explain specific interview questions
-export const conceptExplainPrompt = (questions) => {
-  return `
-You are a technical mentor helping candidates prepare for interviews.
+export const conceptExplainPrompt = (question) => {
+  if (!question || typeof question !== 'string' || question.trim().length === 0) {
+    throw new Error('Question is required and must be a non-empty string');
+  }
 
-Please provide detailed explanations for the following interview questions to help candidates understand what interviewers are looking for.
-
-**For each question, provide:**
-1. **What the question is really asking:** Break down the core concept being tested
-2. **Why it matters:** Explain the practical importance in real work scenarios
-3. **Key areas to cover:** Main points a strong answer should include
-4. **Common mistakes:** What candidates often get wrong or miss
-5. **Pro tip:** One insider tip to make the answer stand out
-
-**Questions to explain:**
-${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}
-
-**Format for each question:**
-**Question ${1}:** [Question text]
-**What they're really asking:** [Core concept explanation]
-**Why it matters:** [Practical importance]
-**Key areas to cover:** [Main points to include]
-**Common mistakes:** [What to avoid]
-**Pro tip:** [How to excel]
-
----
-
-Keep explanations clear, practical, and focused on helping candidates succeed in their interviews.
-`;
+  return {
+    title: `Interview Question Explanation`,
+    question,
+    sections: {
+      whatTheyAreTesting: `Break down the core technical concept, skill, or competency being evaluated`,
+      whyItMatters: `Explain the practical importance in real work scenarios and why companies ask this`,
+      keyAreasToCover: [
+        'Critical point 1',
+        'Critical point 2',
+        'Critical point 3',
+        'Critical point 4'
+      ],
+      commonMistakes: [
+        'Common error 1',
+        'Common error 2',
+        'Common error 3'
+      ],
+      proTips: [
+        'Insider tip 1 - how to make your answer memorable',
+        'Insider tip 2 - additional context or examples to include'
+      ],
+      sampleAnswerFramework: `Provide a structured approach to answering this question`,
+      followUpQuestions: [
+        'Follow-up question 1',
+        'Follow-up question 2'
+      ],
+      strategy: `Keep explanations clear and practical. Focus on demonstrating both technical knowledge and problem-solving approach. Show communication skills through well-structured answers. Connect technical concepts to real-world applications. Prepare for follow-up questions that dive deeper.`
+    },
+    note: `Great candidates don't just answer questions correctly - they demonstrate their thinking process, show enthusiasm for the technology, and connect their knowledge to business value.`
+  };
 };

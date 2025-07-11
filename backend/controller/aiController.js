@@ -1,62 +1,156 @@
-import { GoogleGenAI } from "@google/genai";
-import { conceptExplainPrompt } from "../utils/prompts.js";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// @desc    Generate AI-based interview questions for a given role/topic
+// @desc    Generate interview questions based on role, experience, and topics
 // @route   POST /api/ai/generate
 // @access  Private
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { questionAnswerPrompt, conceptExplainPrompt } from "../utils/prompts.js";
 export const generateInterviewQuestions = async (req, res) => {
   try {
-    const { role, experience, topicsToFocus,numberOfQuestions } = req.body;
+    const { role, experience, topicsToFocus, numberOfQuestions } = req.body;
 
-    if (!role || !experience || !topicsToFocus ||numberOfQuestions || !Array.isArray(topics)) {
-      return res.status(400).json({ message: "Role, experience, and topics array are required" });
+    if (
+      !role ||
+      !experience ||
+      !topicsToFocus ||
+      !Array.isArray(topicsToFocus) ||
+      typeof numberOfQuestions !== "number"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Role, experience, numberOfQuestions, and topicsToFocus (as an array) are required",
+      });
     }
 
-    // Build the dynamic prompt
-    const dynamicPrompt = conceptExplainPrompt(role, experience, topics);
+    const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const model = ai.getGenerativeModel({ model: "gemini-pro" });
+    const promptData = questionAnswerPrompt(role, experience, topicsToFocus, numberOfQuestions);
+    
+    // Convert the structured prompt object to a string
+    const promptString = `
+${promptData.promptTitle}
 
-    const result = await model.generateContent(dynamicPrompt);
+Context:
+- Role: ${promptData.context.role}
+- Experience Level: ${promptData.context.experienceLevel}
+- Focus Areas: ${promptData.context.focusAreas}
+- Number of Questions: ${promptData.context.questionCount}
+
+Instructions:
+${promptData.instructions.map(instruction => `• ${instruction}`).join('\n')}
+
+Please format each question as follows:
+${promptData.format.question}
+${promptData.format.idealAnswer}
+Key Points:
+${promptData.format.keyPoints.join('\n')}
+Follow-up: ${promptData.format.followUpQuestion}
+Evaluation: ${promptData.format.evaluationCriteria}
+
+${promptData.note}
+    `.trim();
+
+    const result = await model.generateContent(promptString);
     const response = await result.response;
-    const text = await response.text();
+    const rawText = await response.text();
 
-    res.status(200).json({ success: true, questions: text });
+    const cleanedText = rawText
+      .trim()
+      .replace(/\*\*/g, "")         // Remove markdown bold
+      .replace(/\n{2,}/g, "\n")     // Replace multiple line breaks with single
+      .replace(/\r/g, "");          // Remove carriage returns
+
+    const questions = cleanedText
+      .split(/(?=Q\d+:)/g)          // Split at each Q[number]:
+      .map(q => q.trim())
+      .filter(Boolean);
+
+    return res.status(200).json({
+      success: true,
+      structured_questions: questions
+    });
+
   } catch (error) {
-    console.error("Error generating interview questions:", error.message || error);
-    res.status(500).json({ message: "Failed to generate interview questions" });
+    console.error("❌ Error generating interview questions:", error.message || error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate interview questions"
+    });
   }
 };
 
 
-// @desc    Generate AI-based explanation for technical concepts
+// @desc    Generate explanation for a technical interview question
 // @route   POST /api/ai/explain
 // @access  Private
 export const generateConceptExplanation = async (req, res) => {
   try {
-    const { concepts } = req.body;
+    const { question } = req.body;
 
-    if (!concepts || !Array.isArray(concepts) || concepts.length === 0) {
-      return res.status(400).json({ message: "Concepts array is required" });
+    if (!question) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Question is required" 
+      });
     }
 
-    const prompt = `
-You are an expert technical educator.
-Please explain the following concepts in simple, interview-friendly language:
-${concepts.map((c, i) => `${i + 1}. ${c}`).join("\n")}
-Each explanation should be 3-5 sentences long and easy to understand.
-`;
+    const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const model = ai.getGenerativeModel({ model: "gemini-pro" });
-    const result = await model.generateContent(prompt);
+    const promptData = conceptExplainPrompt(question);
+    
+    // Convert the structured prompt object to a string
+    const promptString = `
+${promptData.title}
+
+Question: ${promptData.question}
+
+Please provide a comprehensive explanation covering:
+
+1. What They Are Testing:
+${promptData.sections.whatTheyAreTesting}
+
+2. Why It Matters:
+${promptData.sections.whyItMatters}
+
+3. Key Areas to Cover:
+${promptData.sections.keyAreasToCover.map(area => `• ${area}`).join('\n')}
+
+4. Common Mistakes:
+${promptData.sections.commonMistakes.map(mistake => `• ${mistake}`).join('\n')}
+
+5. Pro Tips:
+${promptData.sections.proTips.map(tip => `• ${tip}`).join('\n')}
+
+6. Sample Answer Framework:
+${promptData.sections.sampleAnswerFramework}
+
+7. Follow-up Questions:
+${promptData.sections.followUpQuestions.map(q => `• ${q}`).join('\n')}
+
+Strategy: ${promptData.sections.strategy}
+
+Note: ${promptData.note}
+    `.trim();
+
+    const result = await model.generateContent(promptString);
     const response = await result.response;
-    const text = await response.text();
+    const rawText = await response.text();
 
-    res.status(200).json({ success: true, explanation: text });
+    const leanText = rawText
+      .trim()
+      .replace(/\*\*/g, "")
+      .replace(/\n{2,}/g, "\n")
+      .replace(/\r/g, "");
+
+    res.status(200).json({
+      success: true,
+      explanation: leanText,
+    });
   } catch (error) {
-    console.error("Error generating concept explanations:", error.message || error);
-    res.status(500).json({ message: "Failed to generate concept explanations" });
+    console.error("❌ Error generating concept explanation:", error.message || error);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to generate concept explanations" 
+    });
   }
 };

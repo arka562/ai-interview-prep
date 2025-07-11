@@ -14,6 +14,6 @@ router.patch('/:id/pin', protect, togglePinQuestion);
 
 router.patch('/:id/note', protect, updateQuestionNote);
 
-router.post('/:sessionId', protect, addQuestionToSession);
+router.post('/add', protect, addQuestionToSession);
 
 export default router;
