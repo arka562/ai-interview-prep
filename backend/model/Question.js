@@ -14,7 +14,8 @@ const questionSchema = new mongoose.Schema(
     },
     answer: {
       type: String,
-      required: true,
+      required: false, // ✅ Change this to false
+      default: "",     // ✅ Add default empty string
       trim: true,
     },
     note: {

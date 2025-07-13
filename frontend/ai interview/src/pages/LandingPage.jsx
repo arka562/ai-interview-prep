@@ -5,7 +5,7 @@ import { Hero } from "../assets/asset";
 import { LuSparkles } from "react-icons/lu";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
-import Model from "../components/Model";
+import Modal from "../components/Modal";
 import { UserContext } from "../context/userContext";
 import ProfileInfoCard from "../components/Cards/ProfileInfoCard";
 
@@ -103,7 +103,7 @@ const LandingPage = () => {
           Made for pure development...
         </div>
       </div>
-      <Model
+      <Modal
         isOpen={openAuthModal}
         onClose={() => {
           setOpenAuthModal(false);
@@ -117,7 +117,7 @@ const LandingPage = () => {
             <SignUp setCurrentPage={setCurrentPage} />
           )}
         </div>
-      </Model>
+      </Modal>
     </>
   );
 };

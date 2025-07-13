@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 
-const Input = ({ value, onChange, label, placeholder, type }) => {
+const Input = ({
+  value,
+  onChange,
+  label,
+  placeholder,
+  type = "text",
+  name,
+}) => {
   const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = () => setShowPassword(!showPassword);
 
@@ -14,6 +21,7 @@ const Input = ({ value, onChange, label, placeholder, type }) => {
       )}
       <div className="relative">
         <input
+          name={name} // ✅ FIXED: Needed for handleChange to work
           type={
             type === "password" ? (showPassword ? "text" : "password") : type
           }

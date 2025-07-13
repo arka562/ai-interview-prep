@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000, // optional: to catch ECONNABORTED
+  timeout: 30000, // optional: to catch ECONNABORTED
 });
 
 // Request Interceptor

@@ -5,10 +5,14 @@ import Question from "../model/Question.js";
 // @route   POST /api/session
 // @access  Private
 export const createSession = async (req, res) => {
+  let createdSession = null;
+  
   try {
     const { role, experience, topicsToFocus, description, questions } = req.body;
     const userId = req.user._id;
-
+     if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
     // Validate required fields
     if (!role || !experience) {
       return res.status(400).json({ message: "Role and experience are required" });
@@ -18,50 +22,59 @@ export const createSession = async (req, res) => {
       return res.status(400).json({ message: "At least one question is required" });
     }
 
-    // Create session first (without questions)
-    const session = await Session.create({
+    // Validate all questions before creating anything
+    questions.forEach((q, index) => {
+      if (!q.question || typeof q.question !== 'string' || q.question.trim() === '') {
+        throw new Error(`Question text is required for question at index ${index}`);
+      }
+    });
+
+    // Create session first
+    createdSession = await Session.create({
       user: userId,
       role,
       experience,
-      topicsToFocus: topicsToFocus || [], // Ensure it's an array
+      topicsToFocus: topicsToFocus || [],
       description: description || ''
     });
 
-    // Create questions and get their IDs
+    // Create questions
     const questionDocs = await Promise.all(
       questions.map(async (q) => {
-        // Validate question data
-        if (!q.question) {
-          throw new Error(`Question text is required for question: ${JSON.stringify(q)}`);
-        }
-        
         const question = await Question.create({
-          session: session._id,
-          question: q.question,
-          answer: q.answer || '' // Provide default empty string if no answer
+          session: createdSession._id,
+          question: q.question.trim(),
+          answer: q.answer || ''
         });
         return question._id;
       })
     );
 
     // Update session with question IDs
-    session.questions = questionDocs;
-    await session.save();
+    createdSession.questions = questionDocs;
+    await createdSession.save();
 
-    res.status(201).json({ success: true, session });
+    res.status(201).json({ success: true, session: createdSession });
   } catch (error) {
     console.error("Error creating session:", error);
     
-    // If session was created but questions failed, clean up
+    // Clean up session if it was created but questions failed
+    if (createdSession && createdSession._id) {
+      try {
+        await Session.findByIdAndDelete(createdSession._id);
+        console.log("Cleaned up orphaned session:", createdSession._id);
+      } catch (cleanupError) {
+        console.error("Failed to clean up session:", cleanupError);
+      }
+    }
+    
     if (error.message.includes("Question text is required")) {
-      // You might want to delete the session here if question creation fails
       res.status(400).json({ message: error.message });
     } else {
       res.status(500).json({ message: "Failed to create session" });
     }
   }
 };
-
 // @desc    Get session by ID (and its questions)
 // @route   GET /api/session/:id
 // @access  Private
