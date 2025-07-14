@@ -2,6 +2,7 @@ import Question from "../model/Question.js";
 import Session from "../model/Session.js";
 
 // Toggle pin/unpin a question
+// 🔧 BACKEND FIX - Updated Controller
 export const togglePinQuestion = async (req, res) => {
   try {
     const { id } = req.params;
@@ -17,13 +18,20 @@ export const togglePinQuestion = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to modify this question" });
     }
 
+    // 🎯 FIX: Use consistent field name
     question.pinned = !question.pinned;
     await question.save();
 
-    res.status(200).json({ message: "Pin status toggled", pinned: question.pinned });
+    // 🎯 FIX: Return updated question data
+    res.status(200).json({ 
+      message: "Pin status toggled", 
+      pinned: question.pinned,
+      questionId: question._id,
+      success: true 
+    });
   } catch (error) {
     console.error("Error toggling pin:", error);
-    res.status(500).json({ message: "Failed to toggle pin" });
+    res.status(500).json({ message: "Failed to toggle pin", success: false });
   }
 };
 

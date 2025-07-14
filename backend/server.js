@@ -34,8 +34,8 @@ app.use("/api/auth",authRoute);
 app.use("/api/sessions",sessionRoute);
 app.use("/api/questions",questionRoute);
 
-app.use('/api/ai/generate-questions',protect, generateInterviewQuestions);
-app.use('/api/ai/generate-explanations',protect,generateConceptExplanation);
+app.post('/api/ai/generate-questions',protect, generateInterviewQuestions);
+app.post('/api/ai/generate-explanations',protect,generateConceptExplanation);
 
 // Routes
 app.get('/', (req, res) => {
