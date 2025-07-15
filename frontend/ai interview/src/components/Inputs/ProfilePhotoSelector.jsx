@@ -25,28 +25,27 @@ const ProfilePhotoSelector = ({ image, setImage, preview, setPreview }) => {
   const onChooseFile = () => inputRef.current.click();
 
   return (
-    <div className="flex items-center gap-4 relative">
-      {/* Profile Circle */}
-      <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400">
+    <div className="profile-photo-selector">
+      <div className="profile-circle">
         {image || previewUrl ? (
           <img
             src={previewUrl || preview || URL.createObjectURL(image)}
-            alt="Profile"
-            className="w-full h-full object-cover"
+            alt="Profile preview"
+            className="profile-image"
           />
         ) : (
-          <LuUser size={28} />
+          <LuUser className="default-icon" />
         )}
       </div>
 
-      {/* Upload Button - Positioned Just Outside the Circle */}
       <button
         type="button"
         onClick={onChooseFile}
-        className="absolute -bottom-1 left-11 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition"
+        className="upload-button"
         title="Upload Photo"
+        aria-label="Upload profile photo"
       >
-        <LuUpload size={16} />
+        <LuUpload className="upload-icon" />
       </button>
 
       <input
@@ -54,17 +53,17 @@ const ProfilePhotoSelector = ({ image, setImage, preview, setPreview }) => {
         accept="image/*"
         ref={inputRef}
         onChange={handleImageChange}
-        className="hidden"
+        className="file-input"
       />
 
-      {/* Remove Button */}
       {(image || previewUrl) && (
         <button
           type="button"
           onClick={handleRemoveImage}
-          className="flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition"
+          className="remove-button"
+          aria-label="Remove profile photo"
         >
-          <LuTrash size={16} />
+          <LuTrash className="remove-icon" />
           Remove
         </button>
       )}
@@ -73,3 +72,89 @@ const ProfilePhotoSelector = ({ image, setImage, preview, setPreview }) => {
 };
 
 export default ProfilePhotoSelector;
+
+<style jsx>{`
+  .profile-photo-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-circle {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid #d1d5db;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+  }
+
+  .profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .default-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .upload-button {
+    position: absolute;
+    bottom: -0.25rem;
+    left: 2.75rem;
+    background-color: #4f46e5;
+    color: white;
+    border-radius: 50%;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .upload-button:hover {
+    background-color: #4338ca;
+  }
+
+  .upload-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .remove-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 0.375rem;
+    border: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .remove-button:hover {
+    background-color: #dc2626;
+  }
+
+  .remove-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+`}</style>;

@@ -5,7 +5,7 @@ import axiosInstance from "../../utils/axiosInstance"; // adjust path if needed
 import { API_ROUTES } from "../../utils/apiPaths"; // adjust path if needed
 import SpinnerLoader from "../../components/Loader/SpinnerLoader";
 
-const CreateSessionForm = () => {
+const CreateSessionForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
     role: "",
     experience: "",
@@ -21,12 +21,59 @@ const CreateSessionForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Helper function to extract questions from backend response
+  const extractQuestions = (aiResponse) => {
+    console.log("Full AI Response:", aiResponse);
+    console.log("AI Response Data:", aiResponse.data);
+
+    const data = aiResponse.data;
+
+    // Check if response is successful
+    if (!data.success) {
+      console.error("API returned error:", data.message);
+      return null;
+    }
+
+    // Your backend returns structured_questions array with full question objects
+    if (
+      data?.structured_questions &&
+      Array.isArray(data.structured_questions)
+    ) {
+      console.log("Found structured_questions:", data.structured_questions);
+      return data.structured_questions;
+    }
+
+    console.error("No structured_questions found in response");
+    return null;
+  };
+
+  // Helper function to format questions for session creation
+  const formatQuestions = (dbQuestions) => {
+    if (!dbQuestions || !Array.isArray(dbQuestions)) {
+      return [];
+    }
+
+    // Since your backend already returns full question objects from the database,
+    // we just need to extract the relevant fields for session creation
+    const formattedQuestions = dbQuestions
+      .filter((q) => q && q.question && q.question.trim().length > 0)
+      .map((q) => ({
+        question: q.question.trim(),
+        answer: q.answer || "",
+        _id: q._id, // Include the database ID
+        isPinned: q.isPinned || false,
+      }));
+
+    console.log("Formatted questions for session:", formattedQuestions);
+    return formattedQuestions;
+  };
+
   const handleCreateSession = async (e) => {
     e.preventDefault();
     const { role, experience, topicsToFocus } = formData;
 
     if (!role || !experience || !topicsToFocus) {
-      setError("Please fill all fields");
+      setError("Please fill all required fields");
       return;
     }
 
@@ -44,10 +91,17 @@ const CreateSessionForm = () => {
 
       if (topicsArray.length === 0) {
         setError("Please provide at least one topic to focus on");
+        setIsLoading(false);
         return;
       }
 
-      // 1. Generate AI questions
+      console.log("Generating questions for:", {
+        role,
+        experience,
+        topicsArray,
+      });
+
+      // 1. Generate AI questions and create session
       const aiResponse = await axiosInstance.post(
         API_ROUTES.GENERATE_QUESTIONS,
         {
@@ -58,48 +112,63 @@ const CreateSessionForm = () => {
         }
       );
 
-      const structured = aiResponse.data?.structured_questions;
+      console.log("AI Response received:", aiResponse.data);
 
-      if (!structured || structured.length === 0) {
-        setError("Failed to generate questions. Please try again.");
+      // 2. Extract questions from response
+      const dbQuestions = extractQuestions(aiResponse);
+
+      if (!dbQuestions || dbQuestions.length === 0) {
+        console.error("No questions found in AI response");
+        const errorMsg =
+          aiResponse.data?.message ||
+          "Failed to generate questions. Please try again.";
+        setError(errorMsg);
         return;
       }
 
-      // 2. Format and validate questions
-      const formattedQuestions = structured
-        .filter((q) => typeof q === "string" && q.trim().length > 0)
-        .map((q) => ({
-          question: q.trim(),
-          answer: "",
-        }));
+      // 3. Format questions (though they're already in the right format from backend)
+      const formattedQuestions = formatQuestions(dbQuestions);
 
       if (formattedQuestions.length === 0) {
+        console.error("No valid questions after formatting");
         setError("No valid questions were generated. Please try again.");
         return;
       }
 
-      // 3. Create session
-      const response = await axiosInstance.post(API_ROUTES.CREATE_SESSION, {
-        role,
-        experience,
-        topicsToFocus: topicsArray,
-        description: formData.description || "",
-        questions: formattedQuestions,
-      });
+      console.log("Questions generated successfully:", formattedQuestions);
 
-      if (response.data?.session?._id) {
-        navigate(`/interview-prep/${response.data.session._id}`);
-      } else {
+      // 4. The session was already created by the backend, get the sessionId
+      const sessionId = aiResponse.data.sessionId;
+
+      if (!sessionId) {
+        console.error("No sessionId returned from backend");
         setError("Failed to create session.");
+        return;
       }
+
+      console.log("Session created with ID:", sessionId);
+
+      // 5. Navigate to the session (no need to create session again)
+      if (onSuccess) {
+        onSuccess();
+      }
+      navigate(`/interview-prep/${sessionId}`);
     } catch (err) {
       console.error("Full error object:", err);
       console.error("Error response:", err.response);
       console.error("Error response data:", err.response?.data);
 
-      setError(
-        err.response?.data?.message || "Something went wrong. Try again."
-      );
+      let errorMessage = "Something went wrong. Please try again.";
+
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -150,16 +219,21 @@ const CreateSessionForm = () => {
         textarea
       />
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
 
       <button
         type="submit"
-        className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         disabled={isLoading}
       >
         {isLoading ? (
           <>
             <SpinnerLoader />
+            <span>Creating Session...</span>
           </>
         ) : (
           "Create Session"

@@ -21,41 +21,33 @@ const InterviewPrep = () => {
   const [isLoadingMoreQuestions, setIsLoadingMoreQuestions] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [progress, setProgress] = useState(0); // New progress state
 
-  // 🎯 NEW: Function to sort questions (pinned first)
+  // Sort questions (pinned first)
   const sortQuestions = (questions) => {
     if (!questions || !Array.isArray(questions)) return [];
-
     return [...questions].sort((a, b) => {
-      // First sort by pinned status (pinned questions first)
       const aPinned = a.pinned || a.isPinned || false;
       const bPinned = b.pinned || b.isPinned || false;
-
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
-
-      // If both have same pinned status, sort by creation date (newest first)
       const aDate = new Date(a.createdAt || a.updatedAt || 0);
       const bDate = new Date(b.createdAt || b.updatedAt || 0);
       return bDate - aDate;
     });
   };
 
-  // 🎯 NEW: Get sorted questions
-  const getSortedQuestions = () => {
-    return sortQuestions(sessionData?.questions || []);
-  };
+  // Get sorted questions
+  const getSortedQuestions = () => sortQuestions(sessionData?.questions || []);
 
-  // 🎯 NEW: Get pinned and unpinned questions separately
+  // Get pinned and unpinned questions separately
   const getPinnedAndUnpinnedQuestions = () => {
     const questions = sessionData?.questions || [];
-
     const pinnedQuestions = questions.filter((q) => q.pinned || q.isPinned);
     const unpinnedQuestions = questions.filter(
       (q) => !(q.pinned || q.isPinned)
     );
 
-    // Sort each group by creation date (newest first)
     const sortByDate = (a, b) => {
       const aDate = new Date(a.createdAt || a.updatedAt || 0);
       const bDate = new Date(b.createdAt || b.updatedAt || 0);
@@ -68,7 +60,7 @@ const InterviewPrep = () => {
     };
   };
 
-  // 📥 Fetch session details
+  // Fetch session details
   const fetchSessionDetailById = async () => {
     if (!sessionId) {
       setErrorMsg("Session ID is required");
@@ -80,36 +72,27 @@ const InterviewPrep = () => {
 
     try {
       const res = await axiosInstance.get(
-        API_ROUTES.GET_SESSION_BY_ID(sessionId)
+        API_ROUTES.GET_SESSION_BY_ID(sessionId),
+        { timeout: 60000 } // 60s timeout for initial load
       );
 
-      if (res.data && res.data.session) {
-        console.log("✅ Session data fetched:", res.data.session);
-
-        // 🎯 FIX: Sort questions after fetching
-        const sortedSession = {
+      if (res.data?.session) {
+        setSessionData({
           ...res.data.session,
           questions: sortQuestions(res.data.session.questions),
-        };
-
-        setSessionData(sortedSession);
-        console.log(
-          "📌 Pinned questions:",
-          sortedSession.questions.filter((q) => q.pinned || q.isPinned).length
-        );
+        });
       } else {
-        console.error("❌ No session data in response:", res.data);
         setErrorMsg("Session data not found");
       }
     } catch (err) {
-      console.error("❌ Fetch session error:", err);
-      // ... error handling
+      console.error("Fetch session error:", err);
+      setErrorMsg(err.response?.data?.message || "Failed to load session");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 🔄 Generate more questions
+  // Generate more questions with progress tracking
   const generateMoreQuestions = async () => {
     if (!sessionData) {
       toast.error("Session data not available");
@@ -117,127 +100,128 @@ const InterviewPrep = () => {
     }
 
     setIsLoadingMoreQuestions(true);
-    console.log("🔄 Generating more questions...");
+    setErrorMsg("");
+    setProgress(0);
+    console.log("Generating more questions...");
 
     try {
-      const response = await axiosInstance.post(API_ROUTES.GENERATE_QUESTIONS, {
-        sessionId,
-        role: sessionData.role,
-        experience: sessionData.experience,
-        topicsToFocus: sessionData.topicsToFocus,
-        numberOfQuestions: 5,
-      });
+      // Create an EventSource connection for progress updates
+      const eventSource = new EventSource(
+        `${API_ROUTES.GENERATE_QUESTIONS_PROGRESS}?sessionId=${sessionId}` +
+          `&role=${encodeURIComponent(sessionData.role)}` +
+          `&experience=${encodeURIComponent(sessionData.experience)}` +
+          `&topicsToFocus=${encodeURIComponent(
+            sessionData.topicsToFocus.join(",")
+          )}` +
+          `&numberOfQuestions=5`
+      );
 
-      if (response.data?.success && response.data?.structured_questions) {
-        console.log(
-          "✅ New questions generated:",
-          response.data.structured_questions.length
-        );
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.progress) {
+          setProgress(data.progress);
+        }
+        if (data.complete) {
+          eventSource.close();
+          setSessionData((prev) => ({
+            ...prev,
+            questions: sortQuestions([...prev.questions, ...data.questions]),
+          }));
+          toast.success(`${data.questions.length} new questions added`);
+          setIsLoadingMoreQuestions(false);
+        }
+      };
 
-        // Refresh session data to get updated questions
-        await fetchSessionDetailById();
+      eventSource.onerror = () => {
+        eventSource.close();
+        setIsLoadingMoreQuestions(false);
+        setErrorMsg("Connection to progress updates failed");
+      };
 
+      // Fallback - regular API call if SSE fails
+      const response = await axiosInstance.post(
+        API_ROUTES.GENERATE_QUESTIONS,
+        {
+          sessionId,
+          role: sessionData.role,
+          experience: sessionData.experience,
+          topicsToFocus: sessionData.topicsToFocus,
+          numberOfQuestions: 5,
+        },
+        { timeout: 120000 } // 120s timeout
+      );
+
+      if (response.data?.success) {
+        setSessionData((prev) => ({
+          ...prev,
+          questions: sortQuestions([
+            ...prev.questions,
+            ...response.data.structured_questions,
+          ]),
+        }));
         toast.success(
-          `${response.data.structured_questions.length} new questions added successfully`
+          `${response.data.structured_questions.length} new questions added`
         );
-      } else {
-        console.error("❌ Unexpected response format:", response.data);
-        toast.error("Failed to generate new questions");
       }
     } catch (err) {
-      console.error("❌ Generate more questions error:", err);
-      toast.error("Could not generate more questions. Please try again.");
+      console.error("Generate more questions error:", err);
+      if (err.code === "ECONNABORTED") {
+        setErrorMsg(
+          "Request timed out. Generating questions may take longer than expected."
+        );
+      } else {
+        setErrorMsg(
+          err.response?.data?.message || "Failed to generate questions"
+        );
+      }
     } finally {
       setIsLoadingMoreQuestions(false);
     }
   };
 
-  // 📚 Handle "Learn More"
+  // Handle "Learn More"
   const handleLearnMore = (question) => {
-    console.log("🔍 Learn More clicked for:", question.question);
     setSelectedQuestion(question);
     setShowExplanation(true);
   };
 
-  // 📌 Toggle pin/unpin question
+  // Toggle pin/unpin question
   const toggleQuestionPinAnswer = async (questionId, currentStatus) => {
-    if (!questionId) {
-      toast.error("Question ID is required");
-      return;
-    }
-
     try {
-      let apiUrl;
-      if (typeof API_ROUTES.TOGGLE_PIN_QUESTION === "function") {
-        apiUrl = API_ROUTES.TOGGLE_PIN_QUESTION(questionId);
-      } else if (typeof API_ROUTES.TOGGLE_PIN_QUESTION === "string") {
-        apiUrl = API_ROUTES.TOGGLE_PIN_QUESTION.replace(":id", questionId);
-      } else {
-        apiUrl = `/api/questions/${questionId}/pin`;
-      }
-
-      console.log("📌 Toggling pin for question:", questionId);
-      console.log("📌 Current status:", currentStatus);
+      const apiUrl =
+        typeof API_ROUTES.TOGGLE_PIN_QUESTION === "function"
+          ? API_ROUTES.TOGGLE_PIN_QUESTION(questionId)
+          : API_ROUTES.TOGGLE_PIN_QUESTION.replace(":id", questionId);
 
       const response = await axiosInstance.patch(apiUrl);
 
       if (response.data?.success) {
-        // 🎯 FIX: Update sessionData and re-sort questions
-        setSessionData((prevData) => {
-          const updatedQuestions = prevData.questions.map((q) =>
-            q._id === questionId
-              ? {
-                  ...q,
-                  pinned: response.data.pinned,
-                  isPinned: response.data.pinned,
-                }
-              : q
+        setSessionData((prev) => {
+          const updatedQuestions = prev.questions.map((q) =>
+            q._id === questionId ? { ...q, pinned: response.data.pinned } : q
           );
-
-          // Sort the updated questions
-          const sortedQuestions = sortQuestions(updatedQuestions);
-
-          return {
-            ...prevData,
-            questions: sortedQuestions,
-          };
+          return { ...prev, questions: sortQuestions(updatedQuestions) };
         });
-
-        toast.success(
-          response.data.pinned
-            ? "📌 Question pinned to top"
-            : "📌 Question unpinned"
-        );
-      } else {
-        throw new Error(response.data?.message || "Failed to toggle pin");
       }
     } catch (err) {
-      console.error("❌ Toggle pin error:", err);
-      toast.error("Failed to update pin status. Please try again.");
+      console.error("Toggle pin error:", err);
+      toast.error("Failed to update pin status");
     }
   };
 
-  // ❌ Close explanation drawer
+  // Close explanation drawer
   const closeExplanationDrawer = () => {
     setShowExplanation(false);
     setSelectedQuestion(null);
   };
 
-  // 🚀 Initialize component
+  // Initialize component
   useEffect(() => {
-    if (sessionId) {
-      fetchSessionDetailById();
-    } else {
-      setErrorMsg("No session ID provided");
-    }
+    if (sessionId) fetchSessionDetailById();
   }, [sessionId]);
 
-  // ... Loading and error states remain the same ...
-
-  // 🎯 NEW: Get questions data for rendering
   const { pinnedQuestions, unpinnedQuestions } =
     getPinnedAndUnpinnedQuestions();
-  const allQuestions = getSortedQuestions();
 
   return (
     <DashboardLayout>
@@ -260,7 +244,7 @@ const InterviewPrep = () => {
             showExplanation ? "md:col-span-7" : "md:col-span-8"
           }`}
         >
-          {/* 🔄 Generate More Questions Button */}
+          {/* Generate More Questions Section */}
           <div className="mb-4">
             <button
               onClick={generateMoreQuestions}
@@ -274,30 +258,48 @@ const InterviewPrep = () => {
               {isLoadingMoreQuestions ? (
                 <span className="flex items-center">
                   <SpinnerLoader className="w-4 h-4 mr-2" />
-                  Generating Questions...
+                  Generating ({progress}%)...
                 </span>
               ) : (
-                "➕ Generate More Questions"
+                "➕ Generate More Questions (5)"
               )}
             </button>
 
-            {/* 🎯 NEW: Show pin status info */}
-            {sessionData?.questions?.length > 0 && (
-              <div className="text-sm text-gray-500 mt-2">
-                <p>💡 This will generate 5 new questions with answers only.</p>
-                {pinnedQuestions.length > 0 && (
-                  <p className="text-blue-600 font-medium">
-                    📌 {pinnedQuestions.length} pinned question
-                    {pinnedQuestions.length > 1 ? "s" : ""} shown at top
-                  </p>
-                )}
+            {/* Progress bar */}
+            {isLoadingMoreQuestions && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full"
+                  style={{ width: `${progress}%` }}
+                ></div>
               </div>
+            )}
+
+            {/* Status messages */}
+            {errorMsg && (
+              <div className="mt-2 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+                <p className="flex items-center">
+                  <LuCircleAlert className="mr-2" />
+                  {errorMsg}
+                </p>
+              </div>
+            )}
+
+            {pinnedQuestions.length > 0 && (
+              <p className="text-sm text-blue-600 mt-2">
+                📌 {pinnedQuestions.length} pinned question
+                {pinnedQuestions.length !== 1 ? "s" : ""}
+              </p>
             )}
           </div>
 
-          {/* 📝 Questions List */}
+          {/* Questions List */}
           <AnimatePresence>
-            {!sessionData?.questions || sessionData.questions.length === 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center py-10">
+                <SpinnerLoader className="w-8 h-8" />
+              </div>
+            ) : sessionData?.questions?.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -305,26 +307,22 @@ const InterviewPrep = () => {
                 className="text-center text-gray-500 py-8"
               >
                 <p className="text-lg mb-4">🎯 No questions available yet.</p>
-                <p className="text-sm mb-6">
-                  Generate your first set of interview questions to get started!
-                </p>
                 <button
                   onClick={generateMoreQuestions}
                   disabled={isLoadingMoreQuestions}
-                  className={`px-6 py-3 text-white rounded-lg font-medium transition ${
+                  className={`px-6 py-3 text-white rounded-lg font-medium ${
                     isLoadingMoreQuestions
-                      ? "bg-gray-400 cursor-not-allowed"
+                      ? "bg-gray-400"
                       : "bg-blue-600 hover:bg-blue-700"
                   }`}
                 >
                   {isLoadingMoreQuestions
-                    ? "🔄 Generating..."
-                    : "🚀 Generate First Questions"}
+                    ? "Generating..."
+                    : "Generate First Questions"}
                 </button>
               </motion.div>
             ) : (
               <>
-                {/* 🎯 NEW: Pinned Questions Section */}
                 {pinnedQuestions.length > 0 && (
                   <div className="mb-6">
                     <div className="flex items-center mb-4 text-blue-600">
@@ -333,27 +331,15 @@ const InterviewPrep = () => {
                         Pinned Questions ({pinnedQuestions.length})
                       </h3>
                     </div>
-
-                    {pinnedQuestions.map((data, index) => (
+                    {pinnedQuestions.map((data) => (
                       <motion.div
-                        key={`pinned-${data._id || index}`}
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{
-                          duration: 0.4,
-                          type: "spring",
-                          stiffness: 100,
-                          delay: index * 0.1,
-                          damping: 15,
-                        }}
+                        key={`pinned-${data._id}`}
                         layout
-                        layoutId={`question-${data._id || index}`}
                         className="border-l-4 border-blue-500 pl-4 mb-4"
                       >
                         <QuestionCard
-                          question={data?.question || ""}
-                          answer={data?.answer || ""}
+                          question={data.question}
+                          answer={data.answer}
                           onLearnMore={() => handleLearnMore(data)}
                           isPinned={true}
                           onTogglePin={() =>
@@ -365,36 +351,22 @@ const InterviewPrep = () => {
                   </div>
                 )}
 
-                {/* 🎯 NEW: Regular Questions Section */}
                 {unpinnedQuestions.length > 0 && (
                   <div>
                     {pinnedQuestions.length > 0 && (
-                      <div className="flex items-center mb-4 text-gray-600">
-                        <h3 className="font-semibold text-lg">
-                          Other Questions ({unpinnedQuestions.length})
-                        </h3>
-                      </div>
+                      <h3 className="font-semibold text-lg mb-4 text-gray-600">
+                        Other Questions ({unpinnedQuestions.length})
+                      </h3>
                     )}
-
-                    {unpinnedQuestions.map((data, index) => (
+                    {unpinnedQuestions.map((data) => (
                       <motion.div
-                        key={`unpinned-${data._id || index}`}
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{
-                          duration: 0.4,
-                          type: "spring",
-                          stiffness: 100,
-                          delay: (pinnedQuestions.length + index) * 0.1,
-                          damping: 15,
-                        }}
+                        key={`unpinned-${data._id}`}
                         layout
-                        layoutId={`question-${data._id || index}`}
+                        className="mb-4"
                       >
                         <QuestionCard
-                          question={data?.question || ""}
-                          answer={data?.answer || ""}
+                          question={data.question}
+                          answer={data.answer}
                           onLearnMore={() => handleLearnMore(data)}
                           isPinned={false}
                           onTogglePin={() =>
@@ -410,7 +382,7 @@ const InterviewPrep = () => {
           </AnimatePresence>
         </div>
 
-        {/* 📚 AI Explanation Drawer */}
+        {/* AI Explanation Drawer */}
         {showExplanation && selectedQuestion && (
           <div className="col-span-12 md:col-span-5">
             <AIResponse

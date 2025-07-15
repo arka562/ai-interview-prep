@@ -14,34 +14,41 @@ const SignUp = ({ setCurrentPage }) => {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   const navigate = useNavigate();
   const { loginUser } = useContext(UserContext);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // Client-side validation
-    if (!name) return setError("Please enter full name");
-    if (!validateEmail(email)) return setError("Enter a valid email address");
-    if (!password || password.length < 8)
-      return setError("Password must be at least 8 characters");
+    if (!name) {
+      setError("Please enter full name");
+      setIsLoading(false);
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+    if (!password || password.length < 8) {
+      setError("Password must be at least 8 characters");
+      setIsLoading(false);
+      return;
+    }
 
     setError("");
 
     try {
       let imageUrl = "";
-
-      // Step 1: Upload profile image if selected
       if (profilePic) {
-        const formData = new FormData();
-        formData.append("image", profilePic);
-
         const imageRes = await uploadImage(profilePic);
-        imageUrl = imageRes.data?.imageUrl || " ";
+        imageUrl = imageRes.data?.imageUrl || "";
       }
 
-      // Step 2: Register user
       const registerRes = await axiosInstance.post(API_ROUTES.REGISTER, {
         name,
         email,
@@ -51,7 +58,6 @@ const SignUp = ({ setCurrentPage }) => {
 
       const { token, user } = registerRes.data;
 
-      // Step 3: Store token and update context
       if (token) {
         localStorage.setItem("token", token);
         loginUser(user);
@@ -60,73 +66,292 @@ const SignUp = ({ setCurrentPage }) => {
         setError("Registration failed. Please try again.");
       }
     } catch (error) {
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
+      setError(
+        error.response?.data?.message ||
+          "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="w-full max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">Create Account</h3>
-      <p className="text-sm text-gray-600 mb-6">
-        Please enter your details to register.
-      </p>
+  const switchToLogin = () => {
+    setIsVisible(false);
+    setTimeout(() => setCurrentPage("login"), 300);
+  };
 
-      <form onSubmit={handleSignUp} className="space-y-4">
-        {/* Profile Picture */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">
-            Profile Picture
-          </label>
-          <ProfilePhotoSelector image={profilePic} setImage={setProfilePic} />
+  return (
+    <div className="signup-container">
+      <div className={`signup-card ${isVisible ? "visible" : "hidden"}`}>
+        <div className="signup-header">
+          <div className="signup-icon">
+            <svg viewBox="0 0 24 24">
+              <path
+                stroke="currentColor"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+          <h3 className="signup-title">Create Account</h3>
+          <p className="signup-subtitle">
+            Join us and start your journey today
+          </p>
         </div>
 
-        <Input
-          value={name}
-          onChange={({ target }) => setName(target.value)}
-          label="Full Name"
-          placeholder="e.g. Arkaprava Ghosh"
-          type="text"
-        />
+        <form onSubmit={handleSignUp} className="signup-form">
+          <div className="form-group">
+            <label className="input-label">Profile Picture</label>
+            <ProfilePhotoSelector image={profilePic} setImage={setProfilePic} />
+          </div>
 
-        <Input
-          value={email}
-          onChange={({ target }) => setEmail(target.value)}
-          label="Email Address"
-          placeholder="arka1234@gmail.com"
-          type="text"
-        />
+          <div className="form-group">
+            <label className="input-label">Full Name</label>
+            <Input
+              value={name}
+              onChange={({ target }) => setName(target.value)}
+              placeholder="e.g. John Doe"
+              type="text"
+            />
+          </div>
 
-        <Input
-          value={password}
-          onChange={({ target }) => setPassword(target.value)}
-          label="Password"
-          placeholder="Enter at least 8 characters"
-          type="password"
-        />
+          <div className="form-group">
+            <label className="input-label">Email Address</label>
+            <Input
+              value={email}
+              onChange={({ target }) => setEmail(target.value)}
+              placeholder="your@email.com"
+              type="email"
+            />
+          </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+          <div className="form-group">
+            <label className="input-label">Password</label>
+            <Input
+              value={password}
+              onChange={({ target }) => setPassword(target.value)}
+              placeholder="Enter at least 8 characters"
+              type="password"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-        >
-          Sign Up
-        </button>
+          {error && (
+            <div className="error-message">
+              <svg viewBox="0 0 24 24">
+                <path
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              {error}
+            </div>
+          )}
 
-        <p className="text-sm text-center mt-4 text-gray-600">
-          Already have an account?{" "}
-          <span
-            onClick={() => setCurrentPage("login")}
-            className="text-blue-600 cursor-pointer hover:underline"
-          >
-            Login
-          </span>
-        </p>
-      </form>
+          <button type="submit" className="signup-button" disabled={isLoading}>
+            {isLoading ? (
+              <span className="button-text">Creating Account...</span>
+            ) : (
+              <span className="button-text">Sign Up</span>
+            )}
+          </button>
+
+          <div className="login-link">
+            Already have an account?{" "}
+            <button type="button" className="login-btn" onClick={switchToLogin}>
+              Login
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <style jsx>{`
+        .signup-container {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+          padding: 2rem;
+        }
+
+        .signup-card {
+          width: 100%;
+          max-width: 28rem;
+          background: white;
+          border-radius: 1.5rem;
+          padding: 2.5rem;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .signup-card.hidden {
+          opacity: 0;
+          transform: translateY(1rem);
+        }
+
+        .signup-header {
+          text-align: center;
+          margin-bottom: 2.5rem;
+        }
+
+        .signup-icon {
+          width: 5rem;
+          height: 5rem;
+          background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 1.5rem;
+          box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+        }
+
+        .signup-icon svg {
+          width: 2rem;
+          height: 2rem;
+          color: white;
+        }
+
+        .signup-title {
+          font-size: 1.875rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          background: linear-gradient(to right, #8b5cf6, #6366f1);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .signup-subtitle {
+          color: #6b7280;
+          font-size: 1rem;
+        }
+
+        .form-group {
+          margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+          display: block;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #4b5563;
+          margin-bottom: 0.5rem;
+        }
+
+        .error-message {
+          color: #dc2626;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 0.75rem;
+          padding: 1rem;
+          font-size: 0.875rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        .error-message svg {
+          width: 1rem;
+          height: 1rem;
+          flex-shrink: 0;
+        }
+
+        .signup-button {
+          width: 100%;
+          background: linear-gradient(to right, #8b5cf6, #6366f1);
+          color: white;
+          border: none;
+          padding: 1rem;
+          border-radius: 0.75rem;
+          font-weight: 600;
+          font-size: 1rem;
+          cursor: pointer;
+          margin-bottom: 1.5rem;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .signup-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4);
+        }
+
+        .signup-button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .signup-button::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.1),
+            rgba(255, 255, 255, 0.3)
+          );
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+
+        .signup-button:hover::after {
+          transform: translateX(100%);
+        }
+
+        .login-link {
+          text-align: center;
+          font-size: 0.875rem;
+          color: #6b7280;
+        }
+
+        .login-btn {
+          color: #8b5cf6;
+          font-weight: 700;
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .login-btn:hover {
+          color: #7c3aed;
+          text-decoration: underline;
+        }
+
+        @keyframes shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          10%,
+          30%,
+          50%,
+          70%,
+          90% {
+            transform: translateX(-5px);
+          }
+          20%,
+          40%,
+          60%,
+          80% {
+            transform: translateX(5px);
+          }
+        }
+      `}</style>
     </div>
   );
 };

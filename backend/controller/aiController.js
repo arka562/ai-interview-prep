@@ -1,39 +1,110 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import mongoose from "mongoose";
 import { questionAnswerPrompt, conceptExplainPrompt } from "../utils/prompts.js";
 import Session from "../model/Session.js";
 import Question from "../model/Question.js";
 
 // 📝 ONLY generates questions with answers - NO explanations
 export const generateInterviewQuestions = async (req, res) => {
-  try {
-    const { role, experience, topicsToFocus, numberOfQuestions, sessionId } = req.body;
+  let sessionId; // Declare at the top for error handling access
 
-    // ✅ Validation - sessionId is required to save questions
-    if (
-      !role ||
-      !experience ||
-      !topicsToFocus ||
-      !Array.isArray(topicsToFocus) ||
-      typeof numberOfQuestions !== "number" ||
-      !sessionId
-    ) {
+  try {
+    console.log("📝 Full request body:", JSON.stringify(req.body, null, 2));
+    console.log("👤 User from req.user:", req.user);
+
+    let { role, experience, topicsToFocus, numberOfQuestions, sessionId: bodySessionId } = req.body;
+    sessionId = bodySessionId; // Assign to outer scope variable
+
+    // Enhanced validation with detailed logging
+    const validationErrors = [];
+
+    if (!role) {
+      validationErrors.push("role is missing");
+    } else {
+      console.log("✅ Role:", role);
+    }
+
+    if (!experience) {
+      validationErrors.push("experience is missing");
+    } else {
+      console.log("✅ Experience:", experience);
+    }
+
+    if (!topicsToFocus) {
+      validationErrors.push("topicsToFocus is missing");
+    } else if (!Array.isArray(topicsToFocus)) {
+      validationErrors.push("topicsToFocus is not an array");
+    } else {
+      console.log("✅ Topics to focus:", topicsToFocus);
+    }
+
+    if (numberOfQuestions === undefined || numberOfQuestions === null) {
+      validationErrors.push("numberOfQuestions is missing");
+    } else if (typeof numberOfQuestions !== "number") {
+      validationErrors.push(`numberOfQuestions is ${typeof numberOfQuestions}, expected number`);
+    } else if (numberOfQuestions < 1 || numberOfQuestions > 20) {
+      validationErrors.push("numberOfQuestions must be between 1 and 20");
+    } else {
+      console.log("✅ Number of questions:", numberOfQuestions);
+    }
+
+    // Validate sessionId if provided
+    if (sessionId && !mongoose.Types.ObjectId.isValid(sessionId)) {
+      validationErrors.push("sessionId is not a valid MongoDB ObjectId");
+    }
+
+    // If there are validation errors, return detailed message
+    if (validationErrors.length > 0) {
+      console.error("❌ Validation errors:", validationErrors);
       return res.status(400).json({
         success: false,
-        message: "Role, experience, numberOfQuestions, sessionId, and topicsToFocus (array) are required",
+        message: "Validation failed",
+        errors: validationErrors,
+        receivedData: {
+          role: role || "MISSING",
+          experience: experience || "MISSING", 
+          topicsToFocus: topicsToFocus || "MISSING",
+          numberOfQuestions: numberOfQuestions || "MISSING",
+          sessionId: sessionId || "NOT PROVIDED"
+        }
       });
     }
 
-    // ✅ Verify session exists and belongs to user
-    const session = await Session.findOne({
-      _id: sessionId,
-      user: req.user._id,
-    });
+    console.log("✅ All validation passed, proceeding with generation...");
 
-    if (!session) {
-      return res.status(404).json({
-        success: false,
-        message: "Session not found or you don't have permission to access it",
+    // ✅ Create or verify session
+    let session;
+    
+    if (sessionId) {
+      // If sessionId provided, verify it exists and belongs to user
+      session = await Session.findOne({
+        _id: sessionId,
+        user: req.user._id,
       });
+
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          message: "Session not found or you don't have permission to access it",
+          sessionId: sessionId
+        });
+      }
+      console.log("✅ Existing session found:", sessionId);
+    } else {
+      // If no sessionId, create a new session
+      session = new Session({
+        user: req.user._id,
+        role,
+        experience,
+        topicsToFocus,
+        numberOfQuestions,
+        questions: [],
+        createdAt: new Date(),
+      });
+      
+      await session.save();
+      sessionId = session._id;
+      console.log("✅ New session created:", sessionId);
     }
 
     // ✅ Prepare AI prompt - ONLY for questions and answers
@@ -63,9 +134,12 @@ ${promptData.note}
     `.trim();
 
     // ✅ Generate content from Gemini
+    console.log("🤖 Calling Gemini API...");
     const result = await model.generateContent(promptString);
     const response = await result.response;
     const rawText = await response.text();
+
+    console.log("✅ AI response received, processing...");
 
     // ✅ Clean and split into questions
     const cleanedText = rawText
@@ -80,11 +154,15 @@ ${promptData.note}
       .filter(Boolean);
 
     if (!rawQuestions.length) {
+      console.error("❌ No questions generated from AI");
       return res.status(500).json({
         success: false,
         message: "No questions generated from AI",
+        sessionId: sessionId
       });
     }
+
+    console.log(`✅ Parsed ${rawQuestions.length} raw questions`);
 
     // ✅ Convert to structured format - ONLY question and answer
     const structuredQuestions = rawQuestions.map(q => {
@@ -97,9 +175,10 @@ ${promptData.note}
         answer,
         isPinned: false,
         session: sessionId,
-        // 🚨 NO explanation field - will be generated separately
       };
     }).filter(q => q.question);
+
+    console.log(`✅ Structured ${structuredQuestions.length} questions`);
 
     // ✅ Save questions to database
     const savedQuestions = await Question.insertMany(structuredQuestions);
@@ -110,22 +189,44 @@ ${promptData.note}
 
     console.log(`✅ Successfully saved ${savedQuestions.length} questions to session ${sessionId}`);
 
-    // ✅ Return structured questions array
+    // ✅ Return structured questions array with session info
     return res.status(200).json({
       success: true,
       message: "Questions generated and saved successfully",
+      sessionId,
       structured_questions: savedQuestions,
     });
   } catch (error) {
     console.error("❌ Error generating questions:", error);
+    console.error("❌ Error stack:", error.stack);
+    
+    // More specific error handling
+    if (error.message?.includes('API key')) {
+      return res.status(500).json({
+        success: false,
+        message: "API key issue - check GEMINI_API_KEY environment variable",
+        sessionId: sessionId || 'not generated'
+      });
+    }
+    
+    if (error.message?.includes('Database') || error.message?.includes('MongoDB')) {
+      return res.status(500).json({
+        success: false,
+        message: "Database connection error",
+        sessionId: sessionId || 'not generated'
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Server error while generating questions",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      sessionId: sessionId || 'not generated'
     });
   }
 };
 
-// 📚 ONLY generates explanations when user asks for "Learn More"
+// Generates detailed explanations for concepts
 export const generateConceptExplanation = async (req, res) => {
   try {
     const { question } = req.body;
@@ -213,41 +314,43 @@ Format the response with clear sections and bullet points for easy reading.
   }
 };
 
-// 🔄 Optional: Update question with explanation (if you want to save explanations)
-export const updateQuestionWithExplanation = async (req, res) => {
+// Retrieves a session by ID with populated questions
+export const getSessionById = async (req, res) => {
   try {
-    const { questionId, explanation } = req.body;
-
-    if (!questionId || !explanation) {
-      return res.status(400).json({
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ 
         success: false,
-        message: "Question ID and explanation are required"
+        message: "Invalid session ID format" 
       });
     }
 
-    const question = await Question.findOneAndUpdate(
-      { _id: questionId },
-      { explanation },
-      { new: true }
-    );
+    const session = await Session.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    })
+      .populate({
+        path: "questions",
+        options: { sort: { isPinned: -1, createdAt: 1 } },
+      })
+      .exec();
 
-    if (!question) {
-      return res.status(404).json({
+    if (!session) {
+      return res.status(404).json({ 
         success: false,
-        message: "Question not found"
+        message: "Session not found" 
       });
     }
 
-    res.status(200).json({
+    res.status(200).json({ 
       success: true,
-      message: "Question updated with explanation",
-      question
+      session 
     });
   } catch (error) {
-    console.error("❌ Error updating question with explanation:", error);
-    res.status(500).json({
+    console.error("Error retrieving session:", error);
+    res.status(500).json({ 
       success: false,
-      message: "Failed to update question with explanation"
+      message: "Failed to retrieve session",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

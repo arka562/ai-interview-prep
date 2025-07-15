@@ -6,7 +6,7 @@ import {
   LuSparkles,
   LuPencil,
 } from "react-icons/lu";
-import AIResponse from "../../pages/InterviewPrep/components/AIResponsePreview"; // Import the new AIResponse component
+import AIResponse from "../../pages/InterviewPrep/components/AIResponsePreview";
 
 const QuestionCard = ({
   question,
@@ -14,7 +14,7 @@ const QuestionCard = ({
   onLearnMore,
   isPinned,
   onTogglePin,
-  questionId, // Add questionId prop for better tracking
+  questionId,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [height, setHeight] = useState(0);
@@ -24,7 +24,7 @@ const QuestionCard = ({
   useEffect(() => {
     if (isExpanded && contentRef.current) {
       const contentHeight = contentRef.current.scrollHeight;
-      setHeight(contentHeight + 10); // Optional extra spacing
+      setHeight(contentHeight + 10);
     } else {
       setHeight(0);
     }
@@ -46,40 +46,32 @@ const QuestionCard = ({
   };
 
   return (
-    <div className="border p-4 rounded-xl shadow-md bg-white mb-4 transition-all duration-300">
-      <div className="flex justify-between items-start">
-        <div className="font-semibold text-lg w-full pr-4">{question}</div>
-        <div className="flex gap-3 flex-shrink-0">
+    <div className="question-card">
+      <div className="question-header">
+        <div className="question-text">{question}</div>
+        <div className="action-buttons">
           <button
             onClick={onTogglePin}
             title={isPinned ? "Unpin Question" : "Pin Question"}
-            className={`p-1 rounded hover:bg-gray-100 transition-colors ${
-              isPinned ? "text-blue-600" : "text-gray-500"
-            }`}
+            className={`pin-button ${isPinned ? "pinned" : ""}`}
           >
             {isPinned ? <LuPinOff size={20} /> : <LuPin size={20} />}
           </button>
           <button
             onClick={toggleExpand}
             title={isExpanded ? "Collapse Answer" : "Expand Answer"}
-            className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-500"
+            className="expand-button"
           >
             <LuChevronDown
               size={20}
-              className={`transition-transform duration-300 ${
-                isExpanded ? "rotate-180" : ""
-              }`}
+              className={`expand-icon ${isExpanded ? "expanded" : ""}`}
             />
           </button>
         </div>
       </div>
 
-      <div
-        className="overflow-hidden transition-all duration-300"
-        style={{ height }}
-      >
-        <div ref={contentRef} className="mt-3 text-gray-700">
-          {/* Show AI Response if active */}
+      <div className="answer-container" style={{ height }}>
+        <div ref={contentRef} className="answer-content">
           {showAIResponse ? (
             <AIResponse
               question={question}
@@ -88,71 +80,49 @@ const QuestionCard = ({
               onLearnMore={onLearnMore}
             />
           ) : (
-            <div className="space-y-2">
-              {/* Render existing answer if available */}
+            <div className="answer-details">
               {answer && answer.trim() ? (
                 <>
                   {answer.split("\n").map((line, idx) => {
-                    // render bullet points as list items
                     if (line.trim().startsWith("•")) {
                       return (
-                        <li key={idx} className="list-disc list-inside ml-4">
+                        <li key={idx} className="bullet-point">
                           {line.replace(/^•\s*/, "")}
                         </li>
                       );
                     }
-                    // render headings like "Follow-up:" or "Evaluation:"
                     if (
                       /^(Key Points|Follow-up|Evaluation|Answer):/i.test(line)
                     ) {
                       return (
-                        <p
-                          key={idx}
-                          className="font-semibold mt-4 text-gray-800"
-                        >
+                        <p key={idx} className="section-heading">
                           {line}
                         </p>
                       );
                     }
-                    // skip empty lines
                     if (!line.trim()) {
                       return null;
                     }
-                    // render normal paragraph
                     return (
-                      <p key={idx} className="text-gray-700 leading-relaxed">
+                      <p key={idx} className="answer-text">
                         {line}
                       </p>
                     );
                   })}
                 </>
               ) : (
-                <p className="text-gray-500 italic">
+                <p className="empty-answer">
                   No answer provided yet. Click "Get AI Answer" to generate one.
                 </p>
               )}
 
-              {/* Action buttons */}
-              <div className="flex gap-3 mt-4 pt-3 border-t border-gray-100">
+              <div className="action-buttons-container">
                 {onLearnMore && (
-                  <button
-                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-3 py-1 rounded-md hover:bg-blue-50 transition-colors text-sm font-medium"
-                    onClick={handleLearnMore}
-                  >
+                  <button className="ai-button" onClick={handleLearnMore}>
                     <LuSparkles size={16} />
                     {answer && answer.trim()
                       ? "Learn More (AI Explain)"
                       : "Get AI Answer"}
-                  </button>
-                )}
-
-                {answer && answer.trim() && (
-                  <button
-                    className="text-gray-600 hover:text-gray-800 flex items-center gap-2 px-3 py-1 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium"
-                    onClick={() => setShowAIResponse(true)}
-                  >
-                    <LuPencil size={16} />
-                    Edit Answer
                   </button>
                 )}
               </div>
@@ -160,6 +130,162 @@ const QuestionCard = ({
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        .question-card {
+          border: 1px solid rgba(203, 213, 225, 0.3);
+          padding: 1.5rem;
+          border-radius: 1rem;
+          background: white;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          margin-bottom: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .question-card:hover {
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
+        }
+
+        .question-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+        }
+
+        .question-text {
+          font-weight: 600;
+          font-size: 1.125rem;
+          color: #1e293b;
+          width: 100%;
+          padding-right: 1rem;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .pin-button {
+          padding: 0.5rem;
+          border-radius: 50%;
+          transition: all 0.2s ease;
+          color: #64748b;
+        }
+
+        .pin-button:hover {
+          background: rgba(226, 232, 240, 0.5);
+        }
+
+        .pin-button.pinned {
+          color: #6366f1;
+        }
+
+        .expand-button {
+          padding: 0.5rem;
+          border-radius: 50%;
+          transition: all 0.2s ease;
+          color: #64748b;
+        }
+
+        .expand-button:hover {
+          background: rgba(226, 232, 240, 0.5);
+        }
+
+        .expand-icon {
+          transition: transform 0.3s ease;
+        }
+
+        .expand-icon.expanded {
+          transform: rotate(180deg);
+        }
+
+        .answer-container {
+          overflow: hidden;
+          transition: height 0.3s ease;
+        }
+
+        .answer-content {
+          margin-top: 0.75rem;
+        }
+
+        .answer-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .bullet-point {
+          list-style-type: disc;
+          margin-left: 1.5rem;
+          color: #475569;
+        }
+
+        .section-heading {
+          font-weight: 600;
+          margin-top: 1rem;
+          color: #334155;
+          background: linear-gradient(to right, #8b5cf6, #6366f1);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+
+        .answer-text {
+          color: #475569;
+          line-height: 1.6;
+        }
+
+        .empty-answer {
+          color: #94a3b8;
+          font-style: italic;
+        }
+
+        .action-buttons-container {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid rgba(226, 232, 240, 0.7);
+        }
+
+        .ai-button {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: linear-gradient(to right, #8b5cf6, #6366f1);
+          color: white;
+          border-radius: 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+        }
+
+        .ai-button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+        }
+
+        .edit-button {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: rgba(226, 232, 240, 0.5);
+          color: #475569;
+          border-radius: 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: all 0.2s ease;
+        }
+
+        .edit-button:hover {
+          background: rgba(203, 213, 225, 0.5);
+        }
+      `}</style>
     </div>
   );
 };

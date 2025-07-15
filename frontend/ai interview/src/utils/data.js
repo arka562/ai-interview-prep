@@ -1,17 +1,18 @@
 // src/utils/data.js
 
 export const CARD_BG = [
-  { id: 1, bgcolor: 'linear-gradient(135deg, #e6f8f3 0%, #f7fcfa 100%)' },
-  { id: 2, bgcolor: 'linear-gradient(135deg, #fef9e7 0%, #fffdf4 100%)' },
-  { id: 3, bgcolor: 'linear-gradient(135deg, #eaf7ff 0%, #f3fbff 100%)' },
-  { id: 4, bgcolor: 'linear-gradient(135deg, #fff2e9 0%, #f8f8f3 100%)' },
-  { id: 5, bgcolor: 'linear-gradient(135deg, #e7f6f5 0%, #f4fafd 100%)' },
-  { id: 6, bgcolor: 'linear-gradient(135deg, #f5f5f5 0%, #fbfbfb 100%)' },
-  { id: 7, bgcolor: 'linear-gradient(135deg, #fff4fc 0%, #fff8fd 100%)' },
-  { id: 8, bgcolor: 'linear-gradient(135deg, #e8f1f8 0%, #f5fef8 100%)' },
-  { id: 9, bgcolor: 'linear-gradient(135deg, #f0ecff 0%, #f7f5ff 100%)' },
-  { id: 10, bgcolor: 'linear-gradient(135deg, #fef2f2 0%, #fff8f8 100%)' },
+  { id: 1, bgcolor: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }, // Dark Blue-Gray
+  { id: 2, bgcolor: 'linear-gradient(135deg, #3f3f46 0%, #27272a 100%)' }, // Cool Gray
+  { id: 3, bgcolor: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }, // Teal
+  { id: 4, bgcolor: 'linear-gradient(135deg, #4c0519 0%, #7f1d1d 100%)' }, // Deep Red
+  { id: 5, bgcolor: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)' }, // Indigo
+  { id: 6, bgcolor: 'linear-gradient(135deg, #3b0764 0%, #6b21a8 100%)' }, // Purple
+  { id: 7, bgcolor: 'linear-gradient(135deg, #422006 0%, #78350f 100%)' }, // Warm Brown
+  { id: 8, bgcolor: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)' }, // Forest Green
+  { id: 9, bgcolor: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' }, // Charcoal
+  { id: 10, bgcolor: 'linear-gradient(135deg, #3c2a21 0%, #1c1917 100%)' }, // Dark Coffee
 ];
+
 
 
 export const APP_FEATURES = [
