@@ -1,82 +1,69 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+ import { GoogleGenerativeAI } from "@google/generative-ai";
 import mongoose from "mongoose";
 import { questionAnswerPrompt, conceptExplainPrompt } from "../utils/prompts.js";
 import Session from "../model/Session.js";
 import Question from "../model/Question.js";
 
-// 📝 ONLY generates questions with answers - NO explanations
+// ✅ INIT AI
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// ✅ RETRY LOGIC
+const generateWithRetry = async (prompt, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return await result.response.text();
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      console.log(`⚠️ Retry attempt ${i + 1}`);
+    }
+  }
+};
+
+// ✅ TIMEOUT WRAPPER
+const generateWithTimeout = async (prompt) => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("AI timeout")), 10000)
+  );
+
+  return Promise.race([
+    generateWithRetry(prompt),
+    timeoutPromise,
+  ]);
+};
+
+// 📝 Generate Interview Questions
 export const generateInterviewQuestions = async (req, res) => {
-  let sessionId; // Declare at the top for error handling access
+  let sessionId;
 
   try {
-    console.log("📝 Full request body:", JSON.stringify(req.body, null, 2));
-    console.log("👤 User from req.user:", req.user);
-
     let { role, experience, topicsToFocus, numberOfQuestions, sessionId: bodySessionId } = req.body;
-    sessionId = bodySessionId; // Assign to outer scope variable
+    sessionId = bodySessionId;
 
-    // Enhanced validation with detailed logging
-    const validationErrors = [];
-
-    if (!role) {
-      validationErrors.push("role is missing");
-    } else {
-      console.log("✅ Role:", role);
-    }
-
-    if (!experience) {
-      validationErrors.push("experience is missing");
-    } else {
-      console.log("✅ Experience:", experience);
-    }
-
-    if (!topicsToFocus) {
-      validationErrors.push("topicsToFocus is missing");
-    } else if (!Array.isArray(topicsToFocus)) {
-      validationErrors.push("topicsToFocus is not an array");
-    } else {
-      console.log("✅ Topics to focus:", topicsToFocus);
-    }
-
-    if (numberOfQuestions === undefined || numberOfQuestions === null) {
-      validationErrors.push("numberOfQuestions is missing");
-    } else if (typeof numberOfQuestions !== "number") {
-      validationErrors.push(`numberOfQuestions is ${typeof numberOfQuestions}, expected number`);
-    } else if (numberOfQuestions < 1 || numberOfQuestions > 20) {
-      validationErrors.push("numberOfQuestions must be between 1 and 20");
-    } else {
-      console.log("✅ Number of questions:", numberOfQuestions);
-    }
-
-    // Validate sessionId if provided
-    if (sessionId && !mongoose.Types.ObjectId.isValid(sessionId)) {
-      validationErrors.push("sessionId is not a valid MongoDB ObjectId");
-    }
-
-    // If there are validation errors, return detailed message
-    if (validationErrors.length > 0) {
-      console.error("❌ Validation errors:", validationErrors);
+    // ✅ BASIC VALIDATION
+    if (!role || !experience || !Array.isArray(topicsToFocus) || !numberOfQuestions) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
-        errors: validationErrors,
-        receivedData: {
-          role: role || "MISSING",
-          experience: experience || "MISSING", 
-          topicsToFocus: topicsToFocus || "MISSING",
-          numberOfQuestions: numberOfQuestions || "MISSING",
-          sessionId: sessionId || "NOT PROVIDED"
-        }
+        message: "Invalid input data",
       });
     }
 
-    console.log("✅ All validation passed, proceeding with generation...");
+    if (numberOfQuestions < 1 || numberOfQuestions > 20) {
+      return res.status(400).json({
+        success: false,
+        message: "numberOfQuestions must be between 1 and 20",
+      });
+    }
 
-    // ✅ Create or verify session
-    let session; 
-    
+    // ✅ SESSION HANDLING
+    let session;
+
     if (sessionId) {
-      // If sessionId provided, verify it exists and belongs to user
+      if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+        return res.status(400).json({ success: false, message: "Invalid sessionId" });
+      }
+
       session = await Session.findOne({
         _id: sessionId,
         user: req.user._id,
@@ -85,235 +72,153 @@ export const generateInterviewQuestions = async (req, res) => {
       if (!session) {
         return res.status(404).json({
           success: false,
-          message: "Session not found or you don't have permission to access it",
-          sessionId: sessionId
+          message: "Session not found",
         });
       }
-      console.log("✅ Existing session found:", sessionId);
     } else {
-      // If no sessionId, create a new session
-      session = new Session({
+      session = await Session.create({
         user: req.user._id,
-        role,
-        experience,
+        jobRole: role,
+        experienceLevel: experience,
         topicsToFocus,
-        numberOfQuestions,
-        questions: [],
-        createdAt: new Date(),
+        status: "active",
+        startedAt: new Date(),
       });
-      
-      await session.save();
+
       sessionId = session._id;
-      console.log("✅ New session created:", sessionId);
     }
 
-    // ✅ Prepare AI prompt - ONLY for questions and answers
-    const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash"
-
-});
-
+    // ✅ PROMPT
     const promptData = questionAnswerPrompt(role, experience, topicsToFocus, numberOfQuestions);
 
-    // 🎯 Modified prompt to focus ONLY on questions and answers
     const promptString = `
 ${promptData.promptTitle}
 
 Context:
-- Role: ${promptData.context.role}
-- Experience Level: ${promptData.context.experienceLevel}
-- Focus Areas: ${promptData.context.focusAreas}
-- Number of Questions: ${promptData.context.questionCount}
+- Role: ${role}
+- Experience: ${experience}
+- Topics: ${topicsToFocus.join(", ")}
+- Questions: ${numberOfQuestions}
 
-Instructions:
-${promptData.instructions.map(instruction => `• ${instruction}`).join('\n')}
-
-🚨 IMPORTANT: Generate ONLY questions and their basic answers. DO NOT generate explanations, learning materials, or detailed breakdowns.
-
-${promptData.formatInstructions}
-
-${promptData.note}
+🚨 Return STRICT JSON:
+[
+  { "question": "...", "answer": "..." }
+]
     `.trim();
 
-    // ✅ Generate content from Gemini
-    console.log("🤖 Calling Gemini API...");
-    const result = await model.generateContent(promptString);
-    const response = await result.response;
-    const rawText = await response.text();
+    // ✅ AI CALL
+    let rawText;
+    try {
+      rawText = await generateWithTimeout(promptString);
+    } catch (err) {
+      console.log("⚠️ AI failed:", err.message);
 
-    console.log("✅ AI response received, processing...");
-
-    // ✅ Clean and split into questions
-    const cleanedText = rawText
-      .trim()
-      .replace(/\*\*/g, "") // Remove markdown bold
-      .replace(/\r/g, "")
-      .replace(/\n{2,}/g, "\n");
-
-    const rawQuestions = cleanedText
-      .split(/(?=Q\d+:)/g)
-      .map(q => q.trim())
-      .filter(Boolean);
-
-    if (!rawQuestions.length) {
-      console.error("❌ No questions generated from AI");
       return res.status(500).json({
         success: false,
-        message: "No questions generated from AI",
-        sessionId: sessionId
+        message: "AI generation failed. Try again later.",
       });
     }
 
-    console.log(`✅ Parsed ${rawQuestions.length} raw questions`);
+    // ✅ SAFE PARSE
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch (err) {
+      console.log("⚠️ JSON parse failed, fallback parsing...");
 
-    // ✅ Convert to structured format - ONLY question and answer
-    const structuredQuestions = rawQuestions.map(q => {
-      const parts = q.split(/Answer:/i);
-      const question = parts[0]?.replace(/^Q\d+:\s*/, "").trim();
-      const answer = parts[1]?.trim() || "";
-      
-      return {
-        question,
-        answer, 
-        isPinned: false,
-        session: sessionId,
-      };
-    }).filter(q => q.question);
+      parsed = rawText
+        .split("\n")
+        .map((line) => ({
+          question: line,
+          answer: "",
+        }))
+        .filter((q) => q.question);
+    }
 
-    console.log(`✅ Structured ${structuredQuestions.length} questions`);
+    if (!parsed.length) {
+      return res.status(500).json({
+        success: false,
+        message: "No questions generated",
+      });
+    }
 
-    // ✅ Save questions to database
+    // ✅ STRUCTURE DATA
+    const structuredQuestions = parsed.map((q) => ({
+      question: q.question,
+      answer: q.answer || "",
+      session: sessionId,
+    }));
+
+    // ✅ SAVE
     const savedQuestions = await Question.insertMany(structuredQuestions);
-    
-    // ✅ Update session with new question IDs
-    session.questions = [...(session.questions || []), ...savedQuestions.map(q => q._id)];
+
+    session.questions.push(...savedQuestions.map((q) => q._id));
+    session.totalQuestions = session.questions.length;
     await session.save();
 
-    console.log(`✅ Successfully saved ${savedQuestions.length} questions to session ${sessionId}`);
-
-    // ✅ Return structured questions array with session info
     return res.status(200).json({
       success: true,
-      message: "Questions generated and saved successfully",
       sessionId,
-      structured_questions: savedQuestions,
+      questions: savedQuestions,
     });
   } catch (error) {
-    console.error("❌ Error generating questions:", error);
-    console.error("❌ Error stack:", error.stack);
-    
-    // More specific error handling
-    if (error.message?.includes('API key')) {
-      return res.status(500).json({
-        success: false,
-        message: "API key issue - check GEMINI_API_KEY environment variable",
-        sessionId: sessionId || 'not generated'
-      });
-    }
-    
-    if (error.message?.includes('Database') || error.message?.includes('MongoDB')) {
-      return res.status(500).json({
-        success: false,
-        message: "Database connection error",
-        sessionId: sessionId || 'not generated'
-      });
-    }
+    console.error("❌ Error:", error.message);
 
     return res.status(500).json({
       success: false,
-      message: "Server error while generating questions",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      sessionId: sessionId || 'not generated'
+      message: "Server error",
     });
   }
 };
 
-// Generates detailed explanations for concepts
+// 📘 Generate Explanation
 export const generateConceptExplanation = async (req, res) => {
   try {
     const { question } = req.body;
 
     if (!question) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "Question is required" 
+        message: "Question is required",
       });
     }
 
-    console.log("🔍 Generating explanation for:", question);
-
-    const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-
     const promptData = conceptExplainPrompt(question);
-    
-    // 🎯 Enhanced prompt for comprehensive explanations
+
     const promptString = `
-${promptData.title}
+Explain this interview question clearly:
 
-Question: ${promptData.question}
+Question: ${question}
 
-🎯 Please provide a comprehensive explanation covering:
-
-## 1. What They Are Testing:
-${promptData.sections.whatTheyAreTesting}
-
-## 2. Why It Matters:
-${promptData.sections.whyItMatters}
-
-## 3. Key Areas to Cover:
-${promptData.sections.keyAreasToCover.map(area => `• ${area}`).join('\n')}
-
-## 4. Common Mistakes:
-${promptData.sections.commonMistakes.map(mistake => `• ${mistake}`).join('\n')}
-
-## 5. Pro Tips:
-${promptData.sections.proTips.map(tip => `• ${tip}`).join('\n')}
-
-## 6. Sample Answer Framework:
-${promptData.sections.sampleAnswerFramework}
-
-## 7. Follow-up Questions:
-${promptData.sections.followUpQuestions.map(q => `• ${q}`).join('\n')}
-
-## Strategy:
-${promptData.sections.strategy}
-
-**Note:** ${promptData.note}
-
-🚨 IMPORTANT: Generate a detailed explanation that helps the user understand:
-- The concept being tested
-- How to approach the question
-- What makes a good answer
-- Common pitfalls to avoid
-- Tips for standing out
-
-Format the response with clear sections and bullet points for easy reading.
+Provide:
+- What is being tested
+- Key concepts
+- Answer strategy
+- Common mistakes
     `.trim();
 
-    const result = await model.generateContent(promptString);
-    const response = await result.response;
-    const rawText = await response.text();
+    let rawText;
 
-    const cleanedText = rawText
-      .trim()
-      .replace(/\*\*/g, "")
-      .replace(/\n{2,}/g, "\n")
-      .replace(/\r/g, "");
+    try {
+      rawText = await generateWithTimeout(promptString);
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "AI failed to generate explanation",
+      });
+    }
 
-    console.log("✅ Explanation generated successfully");
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      explanation: cleanedText,
+      explanation: rawText.trim(),
     });
   } catch (error) {
-    console.error("❌ Error generating concept explanation:", error.message || error);
-    res.status(500).json({ 
+    console.error("❌ Explanation error:", error.message);
+
+    res.status(500).json({
       success: false,
-      message: "Failed to generate concept explanation" 
+      message: "Server error",
     });
   }
 };
 
-// Retrieves a session by ID with populated questions

@@ -1,81 +1,82 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from '../model/User.js';
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
-export const registerUser = async (req, res) => {
+import jwt from "jsonwebtoken";
+import User from "../model/User.js";
+import asyncHandler from "../utils/asyncHandler.js";
+
+// 🔑 Generate Access Token
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
+};
+
+// @desc    Register User
+export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, profilePic } = req.body;
 
-  try {
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'User already exists' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      profilePic
-    });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      profilePic: user.profilePic,
-      token
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
   }
-};
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
-// ✅ FIXED version of loginUser
-export const loginUser = async (req, res) => {
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    return res.status(400).json({ message: "User already exists" });
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    password, // ✅ hashed in model
+    profilePic,
+  });
+
+  const token = generateToken(user._id);
+
+  res.status(201).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    profilePic: user.profilePic,
+    token,
+  });
+});
+
+// @desc    Login User
+export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  try {
-    // Include password explicitly
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      profilePic: user.profilePic,
-      token
-    });
-  } catch (err) {
-    console.error(err); // <-- helpful for debugging
-    res.status(500).json({ message: 'Server error' });
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email & password required" });
   }
-};
 
+  const user = await User.findOne({ email }).select("+password");
 
-// @desc    Get logged in user's profile
-// @route   GET /api/auth/profile
-// @access  Private
-export const getUserProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+  if (!user || !(await user.comparePassword(password))) {
+    return res.status(401).json({ message: "Invalid credentials" });
   }
-};
+
+  if (!user.isActive) {
+    return res.status(403).json({ message: "Account disabled" });
+  }
+
+  const token = generateToken(user._id);
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    profilePic: user.profilePic,
+    token,
+  });
+});
+
+// @desc    Get Profile
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json(user);
+});

@@ -1,103 +1,122 @@
+
 import Question from "../model/Question.js";
 import Session from "../model/Session.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-// Toggle pin/unpin a question
-// 🔧 BACKEND FIX - Updated Controller
-export const togglePinQuestion = async (req, res) => {
-  try {
-    const { id } = req.params;
+// 🔐 Helper
+const isOwner = (resourceUserId, loggedInUserId) =>
+  resourceUserId.toString() === loggedInUserId.toString();
 
-    const question = await Question.findById(id).populate("session");
+// 🔄 Toggle Pin
+export const togglePinQuestion = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
-    if (!question) {
-      return res.status(404).json({ message: "Question not found" });
-    }
+  const question = await Question.findById(id).populate("session");
 
-    // Check if the logged-in user owns the session
-    if (question.session.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized to modify this question" });
-    }
+  if (!question) {
+    return res.status(404).json({ success: false, message: "Question not found" });
+  }
 
-    // 🎯 FIX: Use consistent field name
-    question.pinned = !question.pinned;
-    await question.save();
+  if (!isOwner(question.session.user, req.user._id)) {
+    return res.status(403).json({ success: false, message: "Not authorized" });
+  }
 
-    // 🎯 FIX: Return updated question data
-    res.status(200).json({ 
-      message: "Pin status toggled", 
-      pinned: question.pinned,
+  question.pinned = !question.pinned;
+  await question.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Pin toggled",
+    data: {
       questionId: question._id,
-      success: true 
+      pinned: question.pinned,
+    },
+  });
+});
+
+// 📝 Update Notes
+export const updateQuestionNote = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { note } = req.body;
+
+  if (typeof note !== "string") {
+    return res.status(400).json({ success: false, message: "Invalid note format" });
+  }
+
+  const question = await Question.findById(id).populate("session");
+
+  if (!question) {
+    return res.status(404).json({ success: false, message: "Question not found" });
+  }
+
+  if (!isOwner(question.session.user, req.user._id)) {
+    return res.status(403).json({ success: false, message: "Not authorized" });
+  }
+
+  question.userNotes = note;
+  await question.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Note updated",
+    data: { note: question.userNotes },
+  });
+});
+
+// ➕ Add Questions
+export const addQuestionToSession = asyncHandler(async (req, res) => {
+  const { sessionId, questions } = req.body;
+
+  if (!sessionId || !Array.isArray(questions)) {
+    return res.status(400).json({
+      success: false,
+      message: "Session ID and valid questions array are required",
     });
-  } catch (error) {
-    console.error("Error toggling pin:", error);
-    res.status(500).json({ message: "Failed to toggle pin", success: false });
   }
-};
 
-// Update or add a note to a question
-export const updateQuestionNote = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { note } = req.body;
+  const session = await Session.findById(sessionId);
 
-    const question = await Question.findById(id).populate("session");
-
-    if (!question) {
-      return res.status(404).json({ message: "Question not found" });
-    }
-
-    if (question.session.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized to modify this question" });
-    }
-
-    question.note = note;
-    await question.save();
-
-    res.status(200).json({ message: "Note updated", note: question.note });
-  } catch (error) {
-    console.error("Error updating note:", error);
-    res.status(500).json({ message: "Failed to update note" });
+  if (!session) {
+    return res.status(404).json({ success: false, message: "Session not found" });
   }
-};
 
-export const addQuestionToSession = async (req, res) => {
-  try {
-    const { sessionId, questions } = req.body;
-
-    if (!sessionId || !questions || !Array.isArray(questions)) {
-      return res.status(400).json({ message: "Session ID and valid questions array are required" });
-    }
-
-    const session = await Session.findById(sessionId);
-
-    if (!session) {
-      return res.status(404).json({ message: "Session not found" });
-    }
-
-    // Check session ownership
-    if (session.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized to add questions to this session" });
-    }
-
-    // Insert new questions
-    const insertedQuestions = await Question.insertMany(
-      questions.map(q => ({
-        session: sessionId,
-        question: q.question,
-        answer: q.answer
-      }))
-    );
-
-    // Push question IDs to session
-    const questionIds = insertedQuestions.map(q => q._id);
-    session.questions.push(...questionIds);
-    await session.save();
-
-    res.status(201).json({ message: "Questions added", questions: insertedQuestions });
-  } catch (error) {
-    console.error("Error adding question:", error);
-    res.status(500).json({ message: "Failed to add question to session" });
+  if (!isOwner(session.user, req.user._id)) {
+    return res.status(403).json({ success: false, message: "Not authorized" });
   }
-};
+
+  if (session.status === "completed") {
+    return res.status(400).json({
+      success: false,
+      message: "Cannot modify completed session",
+    });
+  }
+
+  const validQuestions = questions.filter((q) => q.question);
+
+  if (!validQuestions.length) {
+    return res.status(400).json({
+      success: false,
+      message: "No valid questions provided",
+    });
+  }
+
+  const insertedQuestions = await Question.insertMany(
+    validQuestions.map((q) => ({
+      session: sessionId,
+      question: q.question,
+      answer: q.answer || "",
+    }))
+  );
+
+  session.questions.push(...insertedQuestions.map((q) => q._id));
+  session.totalQuestions = session.questions.length;
+
+  await session.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Questions added successfully",
+    data: insertedQuestions,
+  });
+});
 

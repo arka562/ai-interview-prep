@@ -1,30 +1,37 @@
-import express from 'express';
-import { registerUser, loginUser, getUserProfile } from '../controller/authController.js';
-import  protect  from '../middleware/authMiddleware.js';
-import upload from"../middleware/uploadMiddleware.js"
+
+import express from "express";
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+} from "../controller/authController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import upload from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
-// @route   POST /api/auth/register
-router.post('/register', registerUser);
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.get("/profile", protect, getUserProfile);
 
-// @route   POST /api/auth/login
-router.post('/login', loginUser);
+router.post(
+  "/upload-image",
+  protect,
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
 
-// @route   GET /api/auth/profile
-router.get('/profile', protect, getUserProfile);
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
-router.post('/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No File Uploaded' });
+    res.status(200).json({
+      success: true,
+      message: "Image uploaded successfully",
+      imageUrl,
+    });
   }
-
-  const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-  res.status(200).json({
-    message: 'Image uploaded successfully',
-    imageUrl,
-  });
-});
+);
 
 export default router;
- 
+
