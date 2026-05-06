@@ -7,30 +7,78 @@ const questionSchema = new mongoose.Schema(
       ref: "Session",
       required: true,
     },
+
     question: {
       type: String,
       required: true,
       trim: true,
     },
-    answer: {
+
+    type: {
       type: String,
-      required: false, // ✅ Change this to false
-      default: "",     // ✅ Add default empty string
-      trim: true,
+      enum: ["technical", "behavioral", "mcq"],
+      default: "technical",
     },
-    note: {
+
+    difficulty: {
+      type: String,
+      enum: ["easy", "medium", "hard"],
+      default: "medium",
+    },
+
+    answer: {
       type: String,
       default: "",
       trim: true,
     },
+
+    idealAnswer: {
+      type: String,
+      default: "",
+    },
+
+    isCorrect: {
+      type: Boolean,
+      default: null,
+    },
+
+    score: {
+      type: Number,
+      default: 0,
+    },
+
+    feedback: {
+      type: String,
+      default: "",
+    },
+
+    timeTaken: {
+      type: Number, // seconds
+    },
+
+    attempts: {
+      type: Number,
+      default: 1,
+    },
+
+    userNotes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     pinned: {
       type: Boolean,
       default: false,
     },
   },
   {
-    timestamps: true, // Correct way to enable createdAt & updatedAt
+    timestamps: true,
   }
 );
 
+// 📈 INDEX
+questionSchema.index({ session: 1, createdAt: -1 });
+
 export default mongoose.model("Question", questionSchema);
+

@@ -8,7 +8,7 @@ const Navbar = () => {
       {/* Logo / Brand */}
       <Link to="/dashboard">
         <h2 className="text-xl font-bold text-blue-600 hover:text-blue-800 transition">
-          Interview Prep AI
+          Interview Prep Ai
         </h2>
       </Link>
 

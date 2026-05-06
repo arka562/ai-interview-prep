@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import moment from "moment";
 import { AnimatePresence, motion } from "framer-motion";
-import { LuCircleAlert, LuPin } from "react-icons/lu";
+import { LuCircleAlert, LuPin, LuPlus } from "react-icons/lu";
 import SpinnerLoader from "../../components/Loader/SpinnerLoader";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../utils/axiosInstance";
@@ -21,9 +21,8 @@ const InterviewPrep = () => {
   const [isLoadingMoreQuestions, setIsLoadingMoreQuestions] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [progress, setProgress] = useState(0); // New progress state
+  const [progress, setProgress] = useState(0);
 
-  // Sort questions (pinned first)
   const sortQuestions = (questions) => {
     if (!questions || !Array.isArray(questions)) return [];
     return [...questions].sort((a, b) => {
@@ -37,10 +36,8 @@ const InterviewPrep = () => {
     });
   };
 
-  // Get sorted questions
   const getSortedQuestions = () => sortQuestions(sessionData?.questions || []);
 
-  // Get pinned and unpinned questions separately
   const getPinnedAndUnpinnedQuestions = () => {
     const questions = sessionData?.questions || [];
     const pinnedQuestions = questions.filter((q) => q.pinned || q.isPinned);
@@ -60,7 +57,6 @@ const InterviewPrep = () => {
     };
   };
 
-  // Fetch session details
   const fetchSessionDetailById = async () => {
     if (!sessionId) {
       setErrorMsg("Session ID is required");
@@ -73,7 +69,7 @@ const InterviewPrep = () => {
     try {
       const res = await axiosInstance.get(
         API_ROUTES.GET_SESSION_BY_ID(sessionId),
-        { timeout: 60000 } // 60s timeout for initial load
+        { timeout: 60000 }
       );
 
       if (res.data?.session) {
@@ -92,7 +88,6 @@ const InterviewPrep = () => {
     }
   };
 
-  // Generate more questions with progress tracking
   const generateMoreQuestions = async () => {
     if (!sessionData) {
       toast.error("Session data not available");
@@ -102,43 +97,8 @@ const InterviewPrep = () => {
     setIsLoadingMoreQuestions(true);
     setErrorMsg("");
     setProgress(0);
-    console.log("Generating more questions...");
 
     try {
-      // Create an EventSource connection for progress updates
-      const eventSource = new EventSource(
-        `${API_ROUTES.GENERATE_QUESTIONS_PROGRESS}?sessionId=${sessionId}` +
-          `&role=${encodeURIComponent(sessionData.role)}` +
-          `&experience=${encodeURIComponent(sessionData.experience)}` +
-          `&topicsToFocus=${encodeURIComponent(
-            sessionData.topicsToFocus.join(",")
-          )}` +
-          `&numberOfQuestions=5`
-      );
-
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.progress) {
-          setProgress(data.progress);
-        }
-        if (data.complete) {
-          eventSource.close();
-          setSessionData((prev) => ({
-            ...prev,
-            questions: sortQuestions([...prev.questions, ...data.questions]),
-          }));
-          toast.success(`${data.questions.length} new questions added`);
-          setIsLoadingMoreQuestions(false);
-        }
-      };
-
-      eventSource.onerror = () => {
-        eventSource.close();
-        setIsLoadingMoreQuestions(false);
-        setErrorMsg("Connection to progress updates failed");
-      };
-
-      // Fallback - regular API call if SSE fails
       const response = await axiosInstance.post(
         API_ROUTES.GENERATE_QUESTIONS,
         {
@@ -148,7 +108,7 @@ const InterviewPrep = () => {
           topicsToFocus: sessionData.topicsToFocus,
           numberOfQuestions: 5,
         },
-        { timeout: 120000 } // 120s timeout
+        { timeout: 120000 }
       );
 
       if (response.data?.success) {
@@ -179,13 +139,11 @@ const InterviewPrep = () => {
     }
   };
 
-  // Handle "Learn More"
   const handleLearnMore = (question) => {
     setSelectedQuestion(question);
     setShowExplanation(true);
   };
 
-  // Toggle pin/unpin question
   const toggleQuestionPinAnswer = async (questionId, currentStatus) => {
     try {
       const apiUrl =
@@ -209,13 +167,11 @@ const InterviewPrep = () => {
     }
   };
 
-  // Close explanation drawer
   const closeExplanationDrawer = () => {
     setShowExplanation(false);
     setSelectedQuestion(null);
   };
 
-  // Initialize component
   useEffect(() => {
     if (sessionId) fetchSessionDetailById();
   }, [sessionId]);
@@ -225,174 +181,348 @@ const InterviewPrep = () => {
 
   return (
     <DashboardLayout>
-      <RoleInfoHeader
-        role={sessionData?.role || ""}
-        topicsToFocus={sessionData?.topicsToFocus || []}
-        experience={sessionData?.experience || "-"}
-        questions={sessionData?.questions?.length || 0}
-        description={sessionData?.description || ""}
-        lastUpdated={
-          sessionData?.updatedAt
-            ? moment(sessionData.updatedAt).format("Do MMM YYYY")
-            : ""
-        }
-      />
+      <div className="interview-prep-container">
+        <RoleInfoHeader
+          role={sessionData?.role || ""}
+          topicsToFocus={sessionData?.topicsToFocus || []}
+          experience={sessionData?.experience || "-"}
+          questions={sessionData?.questions?.length || 0}
+          description={sessionData?.description || ""}
+          lastUpdated={
+            sessionData?.updatedAt
+              ? moment(sessionData.updatedAt).format("Do MMM YYYY")
+              : ""
+          }
+        />
 
-      <div className="grid grid-cols-12 gap-4 mt-5 mb-10">
-        <div
-          className={`col-span-12 ${
-            showExplanation ? "md:col-span-7" : "md:col-span-8"
-          }`}
-        >
-          {/* Generate More Questions Section */}
-          <div className="mb-4">
-            <button
-              onClick={generateMoreQuestions}
-              disabled={isLoadingMoreQuestions}
-              className={`px-6 py-3 text-white rounded-lg font-medium transition ${
-                isLoadingMoreQuestions
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-            >
-              {isLoadingMoreQuestions ? (
-                <span className="flex items-center">
-                  <SpinnerLoader className="w-4 h-4 mr-2" />
-                  Generating ({progress}%)...
-                </span>
-              ) : (
-                "➕ Generate More Questions (5)"
-              )}
-            </button>
-
-            {/* Progress bar */}
-            {isLoadingMoreQuestions && (
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-            )}
-
-            {/* Status messages */}
-            {errorMsg && (
-              <div className="mt-2 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
-                <p className="flex items-center">
-                  <LuCircleAlert className="mr-2" />
-                  {errorMsg}
-                </p>
-              </div>
-            )}
-
-            {pinnedQuestions.length > 0 && (
-              <p className="text-sm text-blue-600 mt-2">
-                📌 {pinnedQuestions.length} pinned question
-                {pinnedQuestions.length !== 1 ? "s" : ""}
-              </p>
-            )}
-          </div>
-
-          {/* Questions List */}
-          <AnimatePresence>
-            {isLoading ? (
-              <div className="flex justify-center py-10">
-                <SpinnerLoader className="w-8 h-8" />
-              </div>
-            ) : sessionData?.questions?.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center text-gray-500 py-8"
+        <div className="content-grid">
+          <div
+            className={`questions-column ${
+              showExplanation ? "with-explanation" : ""
+            }`}
+          >
+            {/* Generate More Questions Section */}
+            <div className="generate-section">
+              <button
+                onClick={generateMoreQuestions}
+                disabled={isLoadingMoreQuestions}
+                className="generate-button"
               >
-                <p className="text-lg mb-4">🎯 No questions available yet.</p>
-                <button
-                  onClick={generateMoreQuestions}
-                  disabled={isLoadingMoreQuestions}
-                  className={`px-6 py-3 text-white rounded-lg font-medium ${
-                    isLoadingMoreQuestions
-                      ? "bg-gray-400"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                {isLoadingMoreQuestions ? (
+                  <span className="button-content">
+                    <SpinnerLoader className="spinner" />
+                    Generating ({progress}%)...
+                  </span>
+                ) : (
+                  <span className="button-content">
+                    <LuPlus className="plus-icon" />
+                    Generate More Questions
+                  </span>
+                )}
+              </button>
+
+              {/* Status messages */}
+              {errorMsg && (
+                <div className="error-message">
+                  <LuCircleAlert className="alert-icon" />
+                  {errorMsg}
+                </div>
+              )}
+
+              {pinnedQuestions.length > 0 && (
+                <div className="pinned-count">
+                  <LuPin className="pin-icon" />
+                  {pinnedQuestions.length} pinned question
+                  {pinnedQuestions.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+
+            {/* Questions List */}
+            <AnimatePresence>
+              {isLoading ? (
+                <div className="loading-state">
+                  <SpinnerLoader className="large-spinner" />
+                </div>
+              ) : sessionData?.questions?.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="empty-state"
                 >
-                  {isLoadingMoreQuestions
-                    ? "Generating..."
-                    : "Generate First Questions"}
-                </button>
-              </motion.div>
-            ) : (
-              <>
-                {pinnedQuestions.length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex items-center mb-4 text-blue-600">
-                      <LuPin className="w-5 h-5 mr-2" />
-                      <h3 className="font-semibold text-lg">
-                        Pinned Questions ({pinnedQuestions.length})
-                      </h3>
+                  <p className="empty-text">🎯 No questions available yet.</p>
+                  <button
+                    onClick={generateMoreQuestions}
+                    disabled={isLoadingMoreQuestions}
+                    className="generate-first-button"
+                  >
+                    {isLoadingMoreQuestions
+                      ? "Generating..."
+                      : "Generate First Questions"}
+                  </button>
+                </motion.div>
+              ) : (
+                <>
+                  {pinnedQuestions.length > 0 && (
+                    <div className="pinned-section">
+                      <div className="section-header">
+                        <LuPin className="section-icon" />
+                        <h3 className="section-title">
+                          Pinned Questions ({pinnedQuestions.length})
+                        </h3>
+                      </div>
+                      {pinnedQuestions.map((data) => (
+                        <motion.div
+                          key={`pinned-${data._id}`}
+                          layout
+                          className="pinned-question-container"
+                        >
+                          <QuestionCard
+                            question={data.question}
+                            answer={data.answer}
+                            onLearnMore={() => handleLearnMore(data)}
+                            isPinned={true}
+                            onTogglePin={() =>
+                              toggleQuestionPinAnswer(data._id, true)
+                            }
+                          />
+                        </motion.div>
+                      ))}
                     </div>
-                    {pinnedQuestions.map((data) => (
-                      <motion.div
-                        key={`pinned-${data._id}`}
-                        layout
-                        className="border-l-4 border-blue-500 pl-4 mb-4"
-                      >
-                        <QuestionCard
-                          question={data.question}
-                          answer={data.answer}
-                          onLearnMore={() => handleLearnMore(data)}
-                          isPinned={true}
-                          onTogglePin={() =>
-                            toggleQuestionPinAnswer(data._id, true)
-                          }
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
+                  )}
 
-                {unpinnedQuestions.length > 0 && (
-                  <div>
-                    {pinnedQuestions.length > 0 && (
-                      <h3 className="font-semibold text-lg mb-4 text-gray-600">
-                        Other Questions ({unpinnedQuestions.length})
-                      </h3>
-                    )}
-                    {unpinnedQuestions.map((data) => (
-                      <motion.div
-                        key={`unpinned-${data._id}`}
-                        layout
-                        className="mb-4"
-                      >
-                        <QuestionCard
-                          question={data.question}
-                          answer={data.answer}
-                          onLearnMore={() => handleLearnMore(data)}
-                          isPinned={false}
-                          onTogglePin={() =>
-                            toggleQuestionPinAnswer(data._id, false)
-                          }
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* AI Explanation Drawer */}
-        {showExplanation && selectedQuestion && (
-          <div className="col-span-12 md:col-span-5">
-            <AIResponse
-              question={selectedQuestion.question}
-              questionId={selectedQuestion._id}
-              onClose={closeExplanationDrawer}
-            />
+                  {unpinnedQuestions.length > 0 && (
+                    <div className="unpinned-section">
+                      {pinnedQuestions.length > 0 && (
+                        <h3 className="section-title">
+                          Other Questions ({unpinnedQuestions.length})
+                        </h3>
+                      )}
+                      {unpinnedQuestions.map((data) => (
+                        <motion.div
+                          key={`unpinned-${data._id}`}
+                          layout
+                          className="unpinned-question-container"
+                        >
+                          <QuestionCard
+                            question={data.question}
+                            answer={data.answer}
+                            onLearnMore={() => handleLearnMore(data)}
+                            isPinned={false}
+                            onTogglePin={() =>
+                              toggleQuestionPinAnswer(data._id, false)
+                            }
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+
+          {/* AI Explanation Drawer */}
+          {showExplanation && selectedQuestion && (
+            <div className="explanation-column">
+              <AIResponse
+                question={selectedQuestion.question}
+                questionId={selectedQuestion._id}
+                onClose={closeExplanationDrawer}
+              />
+            </div>
+          )}
+        </div>
       </div>
+
+      <style jsx>{`
+        .interview-prep-container {
+          padding: 2rem;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          min-height: calc(100vh - 4rem);
+        }
+
+        .content-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 2rem;
+          margin-top: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+          .content-grid {
+            grid-template-columns: ${showExplanation ? "2fr 1fr" : "1fr"};
+          }
+        }
+
+        .questions-column {
+          transition: all 0.3s ease;
+        }
+
+        .questions-column.with-explanation {
+          padding-right: 2rem;
+        }
+
+        .generate-section {
+          margin-bottom: 2rem;
+        }
+
+        .generate-button {
+          background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+          color: white;
+          border: none;
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.75rem;
+          font-weight: 600;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);
+          display: flex;
+          align-items: center;
+        }
+
+        .generate-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4);
+        }
+
+        .generate-button:disabled {
+          background: #cbd5e1;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .button-content {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .plus-icon {
+          font-size: 1.25rem;
+        }
+
+        .spinner {
+          width: 1rem;
+          height: 1rem;
+          margin-right: 0.5rem;
+        }
+
+        .error-message {
+          background: #fee2e2;
+          border-left: 4px solid #ef4444;
+          color: #b91c1c;
+          padding: 0.75rem;
+          margin-top: 1rem;
+          border-radius: 0.375rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .alert-icon {
+          font-size: 1.25rem;
+        }
+
+        .pinned-count {
+          color: #6366f1;
+          font-size: 0.875rem;
+          margin-top: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+
+        .pin-icon {
+          font-size: 1rem;
+        }
+
+        .loading-state {
+          display: flex;
+          justify-content: center;
+          padding: 3rem 0;
+        }
+
+        .large-spinner {
+          width: 2.5rem;
+          height: 2.5rem;
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 3rem 0;
+          color: #64748b;
+        }
+
+        .empty-text {
+          font-size: 1.125rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .generate-first-button {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          border: none;
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .generate-first-button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .pinned-section {
+          margin-bottom: 2rem;
+        }
+
+        .section-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+          color: #6366f1;
+        }
+
+        .section-icon {
+          font-size: 1.25rem;
+        }
+
+        .section-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+        }
+
+        .pinned-question-container {
+          border-left: 4px solid #6366f1;
+          padding-left: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .unpinned-section {
+          margin-top: ${pinnedQuestions.length > 0 ? "2rem" : "0"};
+        }
+
+        .unpinned-question-container {
+          margin-bottom: 1.5rem;
+        }
+
+        .explanation-column {
+          background: white;
+          border-radius: 1rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          padding: 1.5rem;
+          height: fit-content;
+          position: sticky;
+          top: 1rem;
+        }
+      `}</style>
     </DashboardLayout>
   );
 };

@@ -29,7 +29,7 @@ const CreateSessionForm = ({ onSuccess }) => {
     const data = aiResponse.data;
 
     // Check if response is successful
-    if (!data.success) {
+    if (!data.success) { 
       console.error("API returned error:", data.message);
       return null;
     }

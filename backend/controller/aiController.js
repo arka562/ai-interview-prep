@@ -73,7 +73,7 @@ export const generateInterviewQuestions = async (req, res) => {
     console.log("✅ All validation passed, proceeding with generation...");
 
     // ✅ Create or verify session
-    let session;
+    let session; 
     
     if (sessionId) {
       // If sessionId provided, verify it exists and belongs to user
@@ -109,7 +109,9 @@ export const generateInterviewQuestions = async (req, res) => {
 
     // ✅ Prepare AI prompt - ONLY for questions and answers
     const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash"
+
+});
 
     const promptData = questionAnswerPrompt(role, experience, topicsToFocus, numberOfQuestions);
 
@@ -172,7 +174,7 @@ ${promptData.note}
       
       return {
         question,
-        answer,
+        answer, 
         isPinned: false,
         session: sessionId,
       };
@@ -241,7 +243,7 @@ export const generateConceptExplanation = async (req, res) => {
     console.log("🔍 Generating explanation for:", question);
 
     const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const promptData = conceptExplainPrompt(question);
     
@@ -315,42 +317,3 @@ Format the response with clear sections and bullet points for easy reading.
 };
 
 // Retrieves a session by ID with populated questions
-export const getSessionById = async (req, res) => {
-  try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid session ID format" 
-      });
-    }
-
-    const session = await Session.findOne({
-      _id: req.params.id,
-      user: req.user._id,
-    })
-      .populate({
-        path: "questions",
-        options: { sort: { isPinned: -1, createdAt: 1 } },
-      })
-      .exec();
-
-    if (!session) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Session not found" 
-      });
-    }
-
-    res.status(200).json({ 
-      success: true,
-      session 
-    });
-  } catch (error) {
-    console.error("Error retrieving session:", error);
-    res.status(500).json({ 
-      success: false,
-      message: "Failed to retrieve session",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-};
