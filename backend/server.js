@@ -1,6 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
 
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -17,7 +18,6 @@ import aiRoute from './routes/aiRoute.js';
 
 import errorHandler from './middleware/errorMiddleware.js';
 
-dotenv.config();
 
 
 if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {

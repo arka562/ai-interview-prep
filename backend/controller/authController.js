@@ -41,6 +41,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 });
 
+
 // @desc    Login User
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -60,6 +61,10 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(user._id);
+  console.log("GEMINI:", !!process.env.GEMINI_API_KEY);
+console.log("OPENROUTER:", !!process.env.OPENROUTER_API_KEY);
+console.log("GROQ:", !!process.env.GROQ_API_KEY);
+console.log("HF:", !!process.env.HF_API_KEY && !!process.env.HF_BASE_URL);
 
   res.json({
     _id: user._id,
