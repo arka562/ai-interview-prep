@@ -7,10 +7,7 @@ import {
   parseModelJson,
 } from "../utils/llmRouter.js";
 
-console.log("GEMINI:", !!process.env.GEMINI_API_KEY);
-console.log("OPENROUTER:", !!process.env.OPENROUTER_API_KEY);
-console.log("GROQ:", !!process.env.GROQ_API_KEY);
-console.log("HF:", !!process.env.HF_API_KEY && !!process.env.HF_BASE_URL);
+
 export const generateQuestions = asyncHandler(async (req, res) => {
   const {
     role,
@@ -37,6 +34,7 @@ export const generateQuestions = asyncHandler(async (req, res) => {
     messages,
     preferredProviders: ["gemini", "openrouter", "groq", "huggingface"],
   });
+  console.log("RAW MODEL OUTPUT:", JSON.stringify(result.text)); // undefined?
 
   const questions = parseModelJson(result.text);
 

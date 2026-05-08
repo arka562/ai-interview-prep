@@ -150,23 +150,33 @@ export const cleanModelText = (text = "") => {
 export const extractJsonBlock = (text = "") => {
   const cleaned = cleanModelText(text);
 
-  // Try to find the outermost array first
-  const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
-  if (arrayMatch) return arrayMatch[0];
+  // Find the first [ or { and match to its closing counterpart
+  const firstArray = cleaned.indexOf("[");
+  const firstObject = cleaned.indexOf("{");
 
-  // Fall back to outermost object
-  const objectMatch = cleaned.match(/\{[\s\S]*\}/);
-  if (objectMatch) return objectMatch[0];
+  // Pick whichever comes first
+  const startsWithArray =
+    firstArray !== -1 &&
+    (firstObject === -1 || firstArray < firstObject);
+
+  if (startsWithArray) {
+    const end = cleaned.lastIndexOf("]");
+    if (end !== -1) return cleaned.slice(firstArray, end + 1);
+  } else if (firstObject !== -1) {
+    const end = cleaned.lastIndexOf("}");
+    if (end !== -1) return cleaned.slice(firstObject, end + 1);
+  }
 
   return cleaned;
 };
 // Parse JSON safely
 export const parseModelJson = (text) => {
   const jsonText = extractJsonBlock(text);
-  console.log("RAW MODEL OUTPUT:", JSON.stringify(jsonText.text));
+  console.log("RAW MODEL OUTPUT:", jsonText); // was jsonText.text — that's always undefined
   try {
     return JSON.parse(jsonText);
   } catch (error) {
+    console.error("FAILED TO PARSE:", jsonText);
     throw new Error(`Invalid JSON response: ${error.message}`);
   }
 };
