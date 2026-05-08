@@ -1,11 +1,10 @@
-
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const sessionSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
 
@@ -18,6 +17,12 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       enum: ["fresher", "junior", "mid", "senior"],
       required: true,
+    },
+
+    mode: {
+      type: String,
+      enum: ["practice", "mock", "resume-based"],
+      default: "practice",
     },
 
     difficulty: {
@@ -33,13 +38,13 @@ const sessionSchema = new mongoose.Schema(
 
     description: {
       type: String,
-      default: '',
+      default: "",
     },
 
     questions: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Question',
+        ref: "Question",
       },
     ],
 
@@ -47,6 +52,16 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       enum: ["active", "completed", "paused"],
       default: "active",
+    },
+
+    currentQuestionIndex: {
+      type: Number,
+      default: 0,
+    },
+
+    completedQuestions: {
+      type: Number,
+      default: 0,
     },
 
     score: {
@@ -59,12 +74,23 @@ const sessionSchema = new mongoose.Schema(
       default: 0,
     },
 
+    lastActivityAt: {
+      type: Date,
+      default: Date.now,
+    },
+
     startedAt: {
       type: Date,
     },
 
     endedAt: {
       type: Date,
+    },
+
+    source: {
+      type: String,
+      enum: ["manual", "resume", "template"],
+      default: "manual",
     },
 
     aiMeta: {
@@ -77,9 +103,9 @@ const sessionSchema = new mongoose.Schema(
   }
 );
 
-// 📈 INDEX
 sessionSchema.index({ user: 1, createdAt: -1 });
+sessionSchema.index({ user: 1, status: 1 });
 
-const Session = mongoose.model('Session', sessionSchema);
+const Session = mongoose.model("Session", sessionSchema);
 
 export default Session;

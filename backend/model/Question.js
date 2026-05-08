@@ -26,39 +26,9 @@ const questionSchema = new mongoose.Schema(
       default: "medium",
     },
 
-    answer: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
     idealAnswer: {
       type: String,
       default: "",
-    },
-
-    isCorrect: {
-      type: Boolean,
-      default: null,
-    },
-
-    score: {
-      type: Number,
-      default: 0,
-    },
-
-    feedback: {
-      type: String,
-      default: "",
-    },
-
-    timeTaken: {
-      type: Number, // seconds
-    },
-
-    attempts: {
-      type: Number,
-      default: 1,
     },
 
     userNotes: {
@@ -77,8 +47,6 @@ const questionSchema = new mongoose.Schema(
   }
 );
 
-// 📈 INDEX
 questionSchema.index({ session: 1, createdAt: -1 });
 
 export default mongoose.model("Question", questionSchema);
-

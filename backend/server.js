@@ -14,6 +14,7 @@ import authRoute from "./routes/authRoute.js";
 import sessionRoute from './routes/sessionRoute.js';
 import questionRoute from './routes/questionRoute.js';
 import aiRoute from './routes/aiRoute.js';
+import answerRoute from "./routes/answerRoute.js";
 
 
 import errorHandler from './middleware/errorMiddleware.js';
@@ -72,7 +73,7 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/sessions", sessionRoute);
 app.use("/api/v1/questions", questionRoute);
 app.use("/api/v1/ai", aiRoute);
-
+app.use("/api/v1/answers", answerRoute);
 
 app.use((req, res, next) => {
   res.status(404).json({
