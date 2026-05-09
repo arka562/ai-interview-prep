@@ -15,6 +15,7 @@ import sessionRoute from './routes/sessionRoute.js';
 import questionRoute from './routes/questionRoute.js';
 import aiRoute from './routes/aiRoute.js';
 import answerRoute from "./routes/answerRoute.js";
+import adaptiveRoute from "./routes/adaptiveRoute.js";
 
 
 import errorHandler from './middleware/errorMiddleware.js';
@@ -74,7 +75,7 @@ app.use("/api/v1/sessions", sessionRoute);
 app.use("/api/v1/questions", questionRoute);
 app.use("/api/v1/ai", aiRoute);
 app.use("/api/v1/answers", answerRoute);
-
+app.use("/api/v1/adaptive", adaptiveRoute);
 app.use((req, res, next) => {
   res.status(404).json({
     success: false,
