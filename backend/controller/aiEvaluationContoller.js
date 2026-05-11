@@ -1,5 +1,3 @@
-// controller/answerController.js
-
 import mongoose from "mongoose";
 import Question from "../model/Question.js";
 import Session from "../model/Session.js";
@@ -7,7 +5,10 @@ import AnswerAttempt from "../model/AnswerAttempt.js";
 import SkillProfile from "../model/SkillProfile.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { generateWithFallback } from "../utils/llmRouter.js";
-
+import {
+  updateSkillProfileFromAttempt,
+  getAdaptiveTarget,
+} from "./skillProfileServices.js";
 /**
  * Build the AI evaluation prompt.
  * Keep the response STRICT JSON so parsing stays stable.
@@ -340,16 +341,24 @@ export const evaluateAnswer = asyncHandler(async (req, res) => {
   }
   await question.save();
 
-  const updatedSkillProfile = await updateSkillProfile({
-    userId: req.user._id,
-    role: session.jobRole,
-    questionTopic,
-    score,
-    timeTaken: typeof timeTaken === "number" ? timeTaken : 0,
-    topicTags: Array.isArray(parsed.topicTags) ? parsed.topicTags : [questionTopic],
-    isCorrect: typeof parsed.isCorrect === "boolean" ? parsed.isCorrect : score >= 60,
-    difficultyAtAttempt: question.difficulty || session.difficulty || "medium",
-  });
+ const parsedTopicTags = Array.isArray(parsed.topicTags) ? parsed.topicTags : [];
+
+const primaryTopic =
+  parsedTopicTags.length > 0 ? parsedTopicTags[0] : questionTopic;
+
+const updatedSkillProfile = await updateSkillProfileFromAttempt({
+  userId: req.user._id,
+  role: session.jobRole,
+  topic: primaryTopic,
+  score,
+  timeTaken: typeof timeTaken === "number" ? timeTaken : 0,
+  isCorrect: typeof parsed.isCorrect === "boolean" ? parsed.isCorrect : score >= 60,
+  difficultyAtAttempt: question.difficulty || session.difficulty || "medium",
+  strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+  weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],
+  topicTags: parsedTopicTags.length > 0 ? parsedTopicTags : [primaryTopic],
+});
+
 
   session.score = updatedSkillProfile.overallScore;
   session.totalQuestions = Math.max(session.totalQuestions || 0, session.questions?.length || 0);
