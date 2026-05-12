@@ -8,7 +8,7 @@ import { generateWithFallback } from "../utils/llmRouter.js";
 import {
   updateSkillProfileFromAttempt,
   getAdaptiveTarget,
-} from "./skillProfileServices.js";
+} from "../service/skillProfileServices.js";
 /**
  * Build the AI evaluation prompt.
  * Keep the response STRICT JSON so parsing stays stable.
