@@ -1,6 +1,6 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
-import upload from "../middleware/uploadMiddleware.js";
+import { uploadResume } from "../middleware/uploadMiddleware.js";
 import {
   createResumeBasedSession,
   getResumeProfiles,
@@ -12,7 +12,7 @@ const router = express.Router();
 router.post(
   "/session",
   protect,
-  upload.single("resume"),
+  uploadResume.single("resume"),
   createResumeBasedSession
 );
 

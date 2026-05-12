@@ -6,7 +6,7 @@ import {
   getUserProfile,
 } from "../controller/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import upload from "../middleware/uploadMiddleware.js";
+import { uploadImage } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ router.get("/profile", protect, getUserProfile);
 router.post(
   "/upload-image",
   protect,
-  upload.single("image"),
+  uploadImage.single("image"),
   (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });

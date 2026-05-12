@@ -1,10 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import * as pdfParse from "pdf-parse";
-import {
-  generateWithFallback,
-  parseModelJson,
-} from "../utils/llmRouter.js";
+import { PDFParse } from "pdf-parse";
+import { generateWithFallback,parseModelJson}from "../utils/llmRouter.js";
 
 export const extractResumeText = async (filePath, mimeType) => {
   if (!filePath) {
@@ -13,8 +10,12 @@ export const extractResumeText = async (filePath, mimeType) => {
 
   if (mimeType === "application/pdf") {
     const buffer = await fs.readFile(filePath);
-    const data = await pdfParse.default(buffer);
-    return data.text || "";
+
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    await parser.destroy();
+
+    return result.text || "";
   }
 
   const ext = path.extname(filePath).toLowerCase();
@@ -24,7 +25,6 @@ export const extractResumeText = async (filePath, mimeType) => {
 
   throw new Error("Unsupported resume file type. Upload PDF or TXT.");
 };
-
 export const buildResumeAnalysisMessages = (resumeText) => {
   return [
     {
@@ -74,6 +74,19 @@ Generate ${numberOfQuestions} interview questions based on this resume analysis.
 
 Analysis:
 ${JSON.stringify(analysis, null, 2)}
+
+Return STRICT valid JSON only.
+
+IMPORTANT:
+- Every question MUST include meaningful topicTags.
+- topicTags should be specific technologies or concepts.
+- Avoid generic tags like "technical" or "general".
+
+Good examples:
+["React", "Hooks"]
+["Machine Learning", "Random Forest"]
+["Node.js", "Authentication"]
+["System Design", "Microservices"]
 
 Return this exact JSON shape:
 [
