@@ -17,6 +17,7 @@ import aiRoute from './routes/aiRoute.js';
 import answerRoute from "./routes/answerRoute.js";
 import adaptiveRoute from "./routes/adaptiveRoute.js";
 import resumeRoute from "./routes/resumeRoute.js";
+import analyticsRoute from "./routes/analyticsRoute.js";
 
 
 import errorHandler from './middleware/errorMiddleware.js';
@@ -78,6 +79,7 @@ app.use("/api/v1/ai", aiRoute);
 app.use("/api/v1/answers", answerRoute);
 app.use("/api/v1/adaptive", adaptiveRoute);
 app.use("/api/v1/resume", resumeRoute);
+app.use("/api/v1/analytics", analyticsRoute);
 app.use((req, res, next) => {
   res.status(404).json({
     success: false,
