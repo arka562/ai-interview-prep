@@ -25,7 +25,7 @@ import errorHandler from './middleware/errorMiddleware.js';
 
 
 if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
-  console.error("❌ Missing required environment variables");
+  console.error(" Missing required environment variables");
   process.exit(1);
 }
 
@@ -46,11 +46,12 @@ app.use(
 
 
 app.use(express.json({ limit: "10kb" }));
-
+app.use(express.urlencoded({ extended: true }));
 
 app.use(compression());
 
 app.use(morgan('dev'));
+app.set("trust proxy", 1);
 
 
 app.use('/uploads', express.static('uploads'));
