@@ -1,4 +1,4 @@
-// routes/adaptiveRoute.js
+
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import { getNextAdaptiveQuestion } from "../controller/adaptiveController.js";
