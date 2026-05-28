@@ -3,22 +3,29 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000/api/v1";
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1",
+  baseURL: BASE_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
-  timeout: 30000,
 });
 
-// Request Interceptor
+// REQUEST INTERCEPTOR
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const userInfo = localStorage.getItem("userInfo");
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (userInfo) {
+      const parsedUser = JSON.parse(userInfo);
+
+      if (parsedUser?.token) {
+        config.headers.Authorization = `Bearer ${parsedUser.token}`;
+      }
     }
 
     return config;
@@ -26,39 +33,32 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor
+// RESPONSE INTERCEPTOR
 apiClient.interceptors.response.use(
   (response) => response,
-
-  async (error) => {
+  (error) => {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       "Something went wrong";
 
-    // Unauthorized
+    // UNAUTHORIZED
     if (error?.response?.status === 401) {
-      localStorage.removeItem("token");
       localStorage.removeItem("userInfo");
 
-      if (window.location.pathname !== "/login") {
+      if (
+        window.location.pathname !== "/login" &&
+        window.location.pathname !== "/register"
+      ) {
         toast.error("Session expired. Please login again.");
 
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 1000);
+        window.location.href = "/login";
       }
     }
 
-    // Server Error
-    if (error?.response?.status >= 500) {
-      toast.error("Server error. Please try again.");
-    }
+    error.customMessage = message;
 
-    return Promise.reject({
-      ...error,
-      customMessage: message,
-    });
+    return Promise.reject(error);
   }
 );
 
