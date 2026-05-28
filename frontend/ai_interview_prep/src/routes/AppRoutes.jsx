@@ -1,31 +1,48 @@
+// src/routes/AppRoutes.jsx
+
 import { Routes, Route, Navigate } from "react-router-dom";
+
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
 import LoginPage from "../pages/auth/LoginPage.jsx";
 import RegisterPage from "../pages/auth/RegisterPage.jsx";
+
 import DashboardPage from "../pages/dashboard/DashboardPage.jsx";
+
 import SessionPage from "../pages/interview/SessionPage.jsx";
 import SessionHistoryPage from "../pages/interview/SessionHistoryPage.jsx";
 import SessionDetailPage from "../pages/interview/SessionDetailPage.jsx";
+
 import ResumeUploadPage from "../pages/resume/ResumeUploadPage.jsx";
 import ResumeProfilePage from "../pages/resume/ResumeProfilePage.jsx";
-import AnalyticsPage from "../pages/analytics/AnalyticsPage.jsx";
-import NotFoundPage from "../pages/NotFoundPage.jsx";
 
-import ProtectedRoute from "./ProtectedRoute.jsx";
+import AnalyticsPage from "../pages/analytics/AnalyticsPage.jsx";
+
+import NotFoundPage from "../pages/NotFoundPage.jsx";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* PUBLIC ROUTES */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      {/* Protected Routes */}
+      {/* PROTECTED ROUTES */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* INTERVIEW */}
+      <Route
+        path="/interview/history"
+        element={
+          <ProtectedRoute>
+            <SessionHistoryPage />
           </ProtectedRoute>
         }
       />
@@ -40,16 +57,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/interview/history"
-        element={
-          <ProtectedRoute>
-            <SessionHistoryPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/interview/history/:sessionId"
+        path="/interview/details/:sessionId"
         element={
           <ProtectedRoute>
             <SessionDetailPage />
@@ -57,6 +65,7 @@ const AppRoutes = () => {
         }
       />
 
+      {/* RESUME */}
       <Route
         path="/resume/upload"
         element={
@@ -75,6 +84,7 @@ const AppRoutes = () => {
         }
       />
 
+      {/* ANALYTICS */}
       <Route
         path="/analytics"
         element={
@@ -84,8 +94,11 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Default Redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* DEFAULT */}
+      <Route
+        path="/"
+        element={<Navigate to="/dashboard" replace />}
+      />
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />

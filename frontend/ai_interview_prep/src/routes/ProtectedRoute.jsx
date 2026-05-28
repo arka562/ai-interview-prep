@@ -1,25 +1,20 @@
+// src/routes/ProtectedRoute.jsx
+
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
-  const { userInfo, token } = useSelector(
-    (state) => state.auth || {}
-  );
+  const { userInfo } = useSelector((state) => state.auth);
 
-  const storedToken = localStorage.getItem("token");
-
-  const isAuthenticated = Boolean(
-    (userInfo && token) || storedToken
-  );
-
-  if (!isAuthenticated) {
+  // CHECK AUTH
+  if (!userInfo) {
     return (
       <Navigate
         to="/login"
+        state={{ from: location }}
         replace
-        state={{ from: location.pathname }}
       />
     );
   }
