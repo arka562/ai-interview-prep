@@ -10,13 +10,13 @@ import {
   authFailure,
   logout as logoutAction,
   clearAuthError,
-} from "../features/auth/authSlice.js";
+} from "../feature/auth/authSlice.js";
 
 import {
   loginUserApi,
   registerUserApi,
   getProfileApi,
-} from "../features/auth/authApi.js";
+} from "../feature/auth/authApi.js";
 
 const useAuth = () => {
   const dispatch = useDispatch();

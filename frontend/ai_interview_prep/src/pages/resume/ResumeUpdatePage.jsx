@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import apiClient from "../../services/apiClient.js";
+import apiClient from "../../services/apiClients.js";
 
 const ResumeUploadPage = () => {
   const navigate = useNavigate();

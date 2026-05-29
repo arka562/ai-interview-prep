@@ -4,8 +4,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
-import LoginPage from "../pages/auth/LoginPage.jsx";
-import RegisterPage from "../pages/auth/RegisterPage.jsx";
+import LoginPage from "../pages/auth/Login.jsx";
+import RegisterPage from "../pages/auth/Register.jsx";
 
 import DashboardPage from "../pages/dashboard/DashboardPage.jsx";
 
@@ -13,7 +13,7 @@ import SessionPage from "../pages/interview/SessionPage.jsx";
 import SessionHistoryPage from "../pages/interview/SessionHistoryPage.jsx";
 import SessionDetailPage from "../pages/interview/SessionDetailPage.jsx";
 
-import ResumeUploadPage from "../pages/resume/ResumeUploadPage.jsx";
+import ResumeUploadPage from "../pages/resume/ResumeUpdatePage.jsx";
 import ResumeProfilePage from "../pages/resume/ResumeProfilePage.jsx";
 
 import AnalyticsPage from "../pages/analytics/AnalyticsPage.jsx";

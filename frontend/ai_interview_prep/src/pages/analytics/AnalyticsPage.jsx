@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import apiClient from "../services/apiClients.js";
+import apiClient from "../../services/apiClients.js";
 
 const AnalyticsPage = () => {
   const [analytics, setAnalytics] = useState(null);

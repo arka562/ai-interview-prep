@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import useAuth from "../../hooks/useAuth.js";
+import useAuth from "../../hook/useAuth.js";
 
 const RegisterPage = () => {
   const { register, loading } = useAuth();
