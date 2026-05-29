@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 
+import Button from "../ui/Button.jsx";
 import useAuth from "../../hooks/useAuth.js";
 
 const navItems = [
@@ -21,13 +22,15 @@ const ProtectedLayout = ({ children }) => {
               AI Interview Coach
             </Link>
 
-            <button
+            <Button
               type="button"
               onClick={logout}
-              className="rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 transition-all hover:border-rose-400 hover:text-rose-300 md:hidden"
+              variant="danger"
+              size="sm"
+              className="md:hidden"
             >
               Logout
-            </button>
+            </Button>
           </div>
 
           <nav className="flex flex-wrap items-center gap-2">
@@ -53,13 +56,13 @@ const ProtectedLayout = ({ children }) => {
               {userInfo?.name || userInfo?.email || "User"}
             </div>
 
-            <button
+            <Button
               type="button"
               onClick={logout}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition-all hover:border-rose-400 hover:text-rose-300"
+              variant="danger"
             >
               Logout
-            </button>
+            </Button>
           </div>
         </div>
       </header>

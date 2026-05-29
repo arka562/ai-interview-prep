@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import Button from "../../components/ui/Button.jsx";
+import Card from "../../components/ui/Card.jsx";
+import Input from "../../components/ui/Input.jsx";
 import useAuth from "../../hooks/useAuth.js";
 
 const RegisterPage = () => {
@@ -32,7 +35,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-10">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
+      <Card className="w-full max-w-md p-8 shadow-xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-white">
             Create Account
@@ -43,72 +46,53 @@ const RegisterPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm text-slate-300 mb-2">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              placeholder="Enter your full name"
-              className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
+          <Input
+            label="Full Name"
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            placeholder="Enter your full name"
+          />
 
-          <div>
-            <label className="block text-sm text-slate-300 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="Enter your email"
-              className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="Enter your email"
+          />
 
-          <div>
-            <label className="block text-sm text-slate-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Create a password"
-              className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            placeholder="Create a password"
+          />
 
-          <div>
-            <label className="block text-sm text-slate-300 mb-2">
-              Profile Picture URL (optional)
-            </label>
-            <input
-              type="text"
-              name="profilePic"
-              value={formData.profilePic}
-              onChange={handleChange}
-              placeholder="Paste image URL"
-              className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
+          <Input
+            label="Profile Picture URL (optional)"
+            type="text"
+            name="profilePic"
+            value={formData.profilePic}
+            onChange={handleChange}
+            placeholder="Paste image URL"
+          />
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 transition-all py-3 font-semibold text-white disabled:opacity-60"
+            className="w-full font-semibold"
+            size="lg"
           >
             {loading ? "Creating account..." : "Register"}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-slate-400 mt-6">
@@ -117,7 +101,7 @@ const RegisterPage = () => {
             Login
           </Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 };

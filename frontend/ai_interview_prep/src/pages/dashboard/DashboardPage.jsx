@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+
+import Card from "../../components/ui/Card.jsx";
 import { useAppSelector } from "../../store/hooks.js";
 
 const DashboardPage = () => {
@@ -32,7 +34,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-white px-4 py-8 md:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+        <Card as="section" className="rounded-3xl p-6 shadow-xl md:p-8">
           <p className="text-sm text-indigo-400 mb-2">Welcome back</p>
           <h1 className="text-3xl md:text-4xl font-bold">
             {userInfo?.name || "User"}, keep building your interview strength
@@ -41,17 +43,17 @@ const DashboardPage = () => {
             Your AI interview coach tracks performance, finds weak areas, and adapts
             every next question based on your answers.
           </p>
-        </section>
+        </Card>
 
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((item) => (
-            <div
+            <Card
               key={item.label}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-5"
+              className="p-5"
             >
               <p className="text-sm text-slate-400">{item.label}</p>
               <h3 className="text-3xl font-bold mt-2">{item.value}</h3>
-            </div>
+            </Card>
           ))}
         </section>
 
@@ -67,10 +69,11 @@ const DashboardPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {quickActions.map((action) => (
-              <Link
+              <Card
+                as={Link}
                 key={action.title}
                 to={action.to}
-                className="group bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-indigo-500 transition-all"
+                className="group block p-6 transition-all hover:border-indigo-500"
               >
                 <h3 className="text-xl font-semibold group-hover:text-indigo-400 transition-colors">
                   {action.title}
@@ -79,13 +82,13 @@ const DashboardPage = () => {
                 <span className="inline-flex mt-5 text-sm text-indigo-400">
                   Open →
                 </span>
-              </Link>
+              </Card>
             ))}
           </div>
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <Card className="p-6">
             <h2 className="text-xl font-semibold mb-3">Current Focus</h2>
             <p className="text-slate-400 text-sm mb-4">
               No active session yet. Start one to see adaptive questions, AI feedback,
@@ -97,9 +100,9 @@ const DashboardPage = () => {
             >
               Create Session
             </Link>
-          </div>
+          </Card>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <Card className="p-6">
             <h2 className="text-xl font-semibold mb-3">Skill Profile Preview</h2>
             <p className="text-slate-400 text-sm mb-4">
               Once you answer questions, this area will show topic-wise confidence,
@@ -111,7 +114,7 @@ const DashboardPage = () => {
             >
               Open Analytics
             </Link>
-          </div>
+          </Card>
         </section>
       </div>
     </div>
