@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "../../store/hooks.js";
 
 const DashboardPage = () => {
-  const { userInfo } = useSelector((state) => state.auth);
+  const { userInfo } = useAppSelector((state) => state.auth);
 
   const quickActions = [
     {

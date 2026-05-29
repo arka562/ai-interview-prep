@@ -1,6 +1,6 @@
 // src/features/auth/authApi.js
 
-import apiClient from "../../services/apiClients.js";
+import apiClient from "../../services/apiClient.js";
 
 export const registerUserApi = async (userData) => {
   const response = await apiClient.post("/auth/register", userData);

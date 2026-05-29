@@ -3,9 +3,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute.jsx";
+import ProtectedLayout from "../components/layout/ProtectedLayout.jsx";
 
-import LoginPage from "../pages/auth/Login.jsx";
-import RegisterPage from "../pages/auth/Register.jsx";
+import LoginPage from "../pages/auth/LoginPage.jsx";
+import RegisterPage from "../pages/auth/RegisterPage.jsx";
 
 import DashboardPage from "../pages/dashboard/DashboardPage.jsx";
 
@@ -13,12 +14,18 @@ import SessionPage from "../pages/interview/SessionPage.jsx";
 import SessionHistoryPage from "../pages/interview/SessionHistoryPage.jsx";
 import SessionDetailPage from "../pages/interview/SessionDetailPage.jsx";
 
-import ResumeUploadPage from "../pages/resume/ResumeUpdatePage.jsx";
+import ResumeUploadPage from "../pages/resume/ResumeUploadPage.jsx";
 import ResumeProfilePage from "../pages/resume/ResumeProfilePage.jsx";
 
 import AnalyticsPage from "../pages/analytics/AnalyticsPage.jsx";
 
 import NotFoundPage from "../pages/NotFoundPage.jsx";
+
+const withProtectedLayout = (page) => (
+  <ProtectedRoute>
+    <ProtectedLayout>{page}</ProtectedLayout>
+  </ProtectedRoute>
+);
 
 const AppRoutes = () => {
   return (
@@ -30,68 +37,40 @@ const AppRoutes = () => {
       {/* PROTECTED ROUTES */}
       <Route
         path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<DashboardPage />)}
       />
 
       {/* INTERVIEW */}
       <Route
         path="/interview/history"
-        element={
-          <ProtectedRoute>
-            <SessionHistoryPage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<SessionHistoryPage />)}
       />
 
       <Route
         path="/interview/session/:sessionId"
-        element={
-          <ProtectedRoute>
-            <SessionPage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<SessionPage />)}
       />
 
       <Route
         path="/interview/details/:sessionId"
-        element={
-          <ProtectedRoute>
-            <SessionDetailPage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<SessionDetailPage />)}
       />
 
       {/* RESUME */}
       <Route
         path="/resume/upload"
-        element={
-          <ProtectedRoute>
-            <ResumeUploadPage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<ResumeUploadPage />)}
       />
 
       <Route
         path="/resume/:sessionId"
-        element={
-          <ProtectedRoute>
-            <ResumeProfilePage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<ResumeProfilePage />)}
       />
 
       {/* ANALYTICS */}
       <Route
         path="/analytics"
-        element={
-          <ProtectedRoute>
-            <AnalyticsPage />
-          </ProtectedRoute>
-        }
+        element={withProtectedLayout(<AnalyticsPage />)}
       />
 
       {/* DEFAULT */}

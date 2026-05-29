@@ -1,6 +1,5 @@
 // src/hooks/useAuth.js
 
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -10,19 +9,20 @@ import {
   authFailure,
   logout as logoutAction,
   clearAuthError,
-} from "../feature/auth/authSlice.js";
+} from "../features/auth/authSlice.js";
 
 import {
   loginUserApi,
   registerUserApi,
   getProfileApi,
-} from "../feature/auth/authApi.js";
+} from "../features/auth/authApi.js";
+import { useAppDispatch, useAppSelector } from "../store/hooks.js";
 
 const useAuth = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const authState = useSelector((state) => state.auth);
+  const authState = useAppSelector((state) => state.auth);
 
   // LOGIN
   const login = async (credentials) => {

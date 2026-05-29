@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import useAuth from "../../hook/useAuth.js";
+import useAuth from "../../hooks/useAuth.js";
 
 const LoginPage = () => {
   const { login, loading } = useAuth();

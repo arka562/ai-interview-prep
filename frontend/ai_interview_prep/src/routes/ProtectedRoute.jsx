@@ -1,12 +1,12 @@
 // src/routes/ProtectedRoute.jsx
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "../store/hooks.js";
 
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
-  const { userInfo } = useSelector((state) => state.auth);
+  const { userInfo } = useAppSelector((state) => state.auth);
 
   // CHECK AUTH
   if (!userInfo) {

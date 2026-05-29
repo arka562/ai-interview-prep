@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import apiClient from "../../services/apiClients.js";
+import apiClient from "../../services/apiClient.js";
 
 const ResumeProfilePage = () => {
   const { sessionId } = useParams();
