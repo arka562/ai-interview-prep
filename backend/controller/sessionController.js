@@ -14,9 +14,20 @@ export const createSession = asyncHandler(async (req, res) => {
   dbSession.startTransaction();
 
   try {
-    const { role, experience, topicsToFocus, description, questions } = req.body;
+    const {
+      role,
+      jobRole,
+      experience,
+      experienceLevel,
+      difficulty,
+      topicsToFocus,
+      description,
+      questions,
+    } = req.body;
+    const resolvedRole = role || jobRole;
+    const resolvedExperience = experience || experienceLevel;
 
-    if (!role || !experience || !Array.isArray(questions) || !questions.length) {
+    if (!resolvedRole || !resolvedExperience || !Array.isArray(questions) || !questions.length) {
       throw new Error("Invalid input");
     }
 
@@ -24,8 +35,9 @@ export const createSession = asyncHandler(async (req, res) => {
       [
         {
           user: req.user._id,
-          jobRole: role,
-          experienceLevel: experience,
+          jobRole: resolvedRole,
+          experienceLevel: resolvedExperience,
+          difficulty: difficulty || "medium",
           topicsToFocus: topicsToFocus || [],
           description: description || "",
           status: "active",

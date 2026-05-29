@@ -23,7 +23,11 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    await login(formData);
+    try {
+      await login(formData);
+    } catch {
+      // useAuth already records the error and shows a toast.
+    }
   };
 
   return (

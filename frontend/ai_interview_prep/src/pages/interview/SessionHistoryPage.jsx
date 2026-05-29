@@ -32,7 +32,8 @@ const SessionHistoryPage = () => {
           "/sessions/my-session"
         );
 
-        setSessions(data || []);
+        const sessionList = data?.data || data?.sessions || data;
+        setSessions(Array.isArray(sessionList) ? sessionList : []);
       } catch (err) {
         const message =
           err?.response?.data?.message ||
@@ -68,12 +69,38 @@ const SessionHistoryPage = () => {
     try {
       setCreating(true);
 
+      const topicsToFocus = formData.topicsToFocus
+        .split(",")
+        .map((topic) => topic.trim())
+        .filter(Boolean);
+
+      const { data: generatedData } = await apiClient.post(
+        "/ai/questions/generate",
+        {
+          role: formData.jobRole,
+          experience: formData.experienceLevel,
+          topicsToFocus,
+          numberOfQuestions: 5,
+        }
+      );
+
+      const questions = generatedData?.questions || generatedData?.data || [];
+
+      if (!Array.isArray(questions) || questions.length === 0) {
+        toast.error("No questions were generated");
+        return;
+      }
+
       const payload = {
-        ...formData,
+        role: formData.jobRole,
+        experience: formData.experienceLevel,
+        difficulty: formData.difficulty,
+        description: formData.description,
         topicsToFocus: formData.topicsToFocus
           .split(",")
           .map((topic) => topic.trim())
           .filter(Boolean),
+        questions,
       };
 
       const { data } = await apiClient.post(
@@ -83,12 +110,14 @@ const SessionHistoryPage = () => {
 
       const createdSession =
         data?.session || data?.data || data;
+      const createdSessionId =
+        createdSession?._id || data?.sessionId || data?.data?.sessionId;
 
       toast.success("Session created successfully");
 
-      navigate(
-        `/interview/session/${createdSession._id}`
-      );
+      if (createdSessionId) {
+        navigate(`/interview/session/${createdSessionId}`);
+      }
     } catch (err) {
       const message =
         err?.response?.data?.message ||

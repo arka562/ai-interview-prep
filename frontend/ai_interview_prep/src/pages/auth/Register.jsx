@@ -22,7 +22,12 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await register(formData);
+
+    try {
+      await register(formData);
+    } catch {
+      // useAuth already records the error and shows a toast.
+    }
   };
 
   return (
