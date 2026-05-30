@@ -245,6 +245,7 @@ const SessionPage = () => {
             session={session}
             formattedTime={formattedTime}
             currentQuestionIndex={currentQuestionIndex}
+            detailTo={`/interview/details/${sessionId}`}
             totalQuestions={session?.questions?.length || 0}
           />
 

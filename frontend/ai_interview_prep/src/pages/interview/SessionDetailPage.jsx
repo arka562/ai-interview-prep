@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
+import Button from "../../components/ui/Button.jsx";
+import Card from "../../components/ui/Card.jsx";
+import Loader from "../../components/ui/Loader.jsx";
 import apiClient from "../../services/apiClient.js";
+import { downloadSessionReport } from "../../utils/reportPdf.js";
 
 const SessionDetailPage = () => {
   const { sessionId } = useParams();
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -18,7 +23,7 @@ const SessionDetailPage = () => {
         setError(null);
 
         const { data } = await apiClient.get(`/sessions/${sessionId}`);
-        const sessionData = data?.session || data;
+        const sessionData = data?.data || data?.session || data;
 
         setSession(sessionData);
       } catch (err) {
@@ -37,10 +42,21 @@ const SessionDetailPage = () => {
     if (sessionId) fetchSession();
   }, [sessionId]);
 
+  const handleDownloadReport = async () => {
+    try {
+      setDownloading(true);
+      await downloadSessionReport(session);
+    } catch {
+      toast.error("Failed to generate report");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <p className="text-slate-300">Loading session details...</p>
+      <div className="min-h-screen bg-slate-950 text-white">
+        <Loader label="Loading session details..." />
       </div>
     );
   }
@@ -48,7 +64,7 @@ const SessionDetailPage = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center">
+        <Card className="max-w-md w-full p-6 text-center">
           <h2 className="text-2xl font-semibold">Could not load session</h2>
           <p className="text-slate-400 mt-3">{error}</p>
           <Link
@@ -57,7 +73,7 @@ const SessionDetailPage = () => {
           >
             Back to History
           </Link>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -65,7 +81,7 @@ const SessionDetailPage = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-white px-4 py-6 md:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8">
+        <Card as="section" className="rounded-3xl p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
               <p className="text-sm text-indigo-400">Session Details</p>
@@ -77,22 +93,33 @@ const SessionDetailPage = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl border border-slate-700 px-4 py-3">
-                <p className="text-slate-400">Score</p>
-                <p className="text-xl font-semibold mt-1">{Math.round(session?.score || 0)}</p>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-2xl border border-slate-700 px-4 py-3">
+                  <p className="text-slate-400">Score</p>
+                  <p className="text-xl font-semibold mt-1">{Math.round(session?.score || 0)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-700 px-4 py-3">
+                  <p className="text-slate-400">Questions</p>
+                  <p className="text-xl font-semibold mt-1">{session?.questions?.length || 0}</p>
+                </div>
               </div>
-              <div className="rounded-2xl border border-slate-700 px-4 py-3">
-                <p className="text-slate-400">Questions</p>
-                <p className="text-xl font-semibold mt-1">{session?.questions?.length || 0}</p>
-              </div>
+
+              <Button
+                type="button"
+                onClick={handleDownloadReport}
+                disabled={downloading}
+                className="w-full"
+              >
+                {downloading ? "Preparing Report..." : "Download Report"}
+              </Button>
             </div>
           </div>
 
           <p className="text-slate-400 mt-4 max-w-3xl">
             {session?.description || "No description available for this session."}
           </p>
-        </section>
+        </Card>
 
         <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8">
           <h2 className="text-xl font-semibold mb-4">Topics To Focus</h2>

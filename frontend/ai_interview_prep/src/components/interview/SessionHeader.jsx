@@ -1,9 +1,12 @@
+import { Link } from "react-router-dom";
+
 import Card from "../ui/Card.jsx";
 
 const SessionHeader = ({
   session,
   formattedTime,
   currentQuestionIndex,
+  detailTo,
   totalQuestions,
 }) => {
   return (
@@ -33,6 +36,15 @@ const SessionHeader = ({
               {currentQuestionIndex + 1}/{totalQuestions}
             </p>
           </div>
+
+          {detailTo ? (
+            <Link
+              to={detailTo}
+              className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-medium text-slate-200 transition-all hover:border-indigo-500 hover:text-white"
+            >
+              Details
+            </Link>
+          ) : null}
         </div>
       </div>
     </Card>
