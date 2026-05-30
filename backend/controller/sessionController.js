@@ -2,6 +2,7 @@
 import mongoose from "mongoose";
 import Session from "../model/Session.js";
 import Question from "../model/Question.js";
+import AnswerAttempt from "../model/AnswerAttempt.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 // 🔐 Helper
@@ -98,7 +99,20 @@ export const getSessionById = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: "Session not found" });
   }
 
-  res.json({ success: true, data: session });
+  const attempts = await AnswerAttempt.find({
+    session: session._id,
+    user: req.user._id,
+  })
+    .sort({ createdAt: 1 })
+    .populate("question", "question difficulty type");
+
+  res.json({
+    success: true,
+    data: {
+      ...session.toObject(),
+      attempts,
+    },
+  });
 });
 
 // 📚 GET ALL SESSIONS (paginated)
