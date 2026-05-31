@@ -22,6 +22,7 @@ const SessionPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [error, setError] = useState(null);
 
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -205,6 +206,33 @@ const SessionPage = () => {
     setElapsedSeconds(0);
   };
 
+  const handleEndSession = async () => {
+    const shouldEnd = window.confirm(
+      "End this interview session? You can still view details and download the report after ending."
+    );
+
+    if (!shouldEnd) return;
+
+    try {
+      setEnding(true);
+      const { data } = await apiClient.patch(`/sessions/${sessionId}/end`);
+      const completedSession = data?.data || data?.session || data;
+
+      setSession(completedSession);
+      toast.success("Session completed");
+      navigate(`/interview/details/${sessionId}`);
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        err?.customMessage ||
+        "Failed to end session";
+
+      toast.error(message);
+    } finally {
+      setEnding(false);
+    }
+  };
+
   // LOADING
   if (loading) {
     return (
@@ -246,6 +274,8 @@ const SessionPage = () => {
             formattedTime={formattedTime}
             currentQuestionIndex={currentQuestionIndex}
             detailTo={`/interview/details/${sessionId}`}
+            ending={ending}
+            onEndSession={handleEndSession}
             totalQuestions={session?.questions?.length || 0}
           />
 
@@ -257,6 +287,7 @@ const SessionPage = () => {
             onGenerateNextQuestion={handleGenerateNextQuestion}
             onSubmit={handleSubmitAnswer}
             submitting={submitting}
+            disabled={session?.status === "completed" || ending}
           />
 
           <FeedbackPanel feedback={feedback} />

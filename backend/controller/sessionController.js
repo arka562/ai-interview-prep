@@ -145,3 +145,45 @@ export const deleteSession = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Session deleted" });
 });
 
+export const endSession = asyncHandler(async (req, res) => {
+  const session = await Session.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!session) {
+    return res.status(404).json({ success: false, message: "Session not found" });
+  }
+
+  if (session.status === "completed") {
+    return res.status(200).json({
+      success: true,
+      message: "Session already completed",
+      data: session,
+    });
+  }
+
+  const completedQuestions = await AnswerAttempt.distinct("question", {
+    session: session._id,
+    user: req.user._id,
+    evaluationStatus: "completed",
+  });
+
+  session.status = "completed";
+  session.completedQuestions = completedQuestions.length;
+  session.totalQuestions = Math.max(
+    session.totalQuestions || 0,
+    session.questions?.length || 0
+  );
+  session.endedAt = new Date();
+  session.lastActivityAt = new Date();
+
+  await session.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Session completed successfully",
+    data: session,
+  });
+});
+

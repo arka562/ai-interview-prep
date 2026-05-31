@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import Button from "../ui/Button.jsx";
 import Card from "../ui/Card.jsx";
 
 const SessionHeader = ({
@@ -7,8 +8,12 @@ const SessionHeader = ({
   formattedTime,
   currentQuestionIndex,
   detailTo,
+  ending = false,
+  onEndSession,
   totalQuestions,
 }) => {
+  const isCompleted = session?.status === "completed";
+
   return (
     <Card as="section" className="rounded-3xl p-6 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -24,7 +29,7 @@ const SessionHeader = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-28 rounded-2xl border border-slate-700 px-4 py-3 text-center">
             <p className="text-xs text-slate-400">Timer</p>
             <p className="text-lg font-semibold">{formattedTime}</p>
@@ -44,6 +49,18 @@ const SessionHeader = ({
             >
               Details
             </Link>
+          ) : null}
+
+          {onEndSession ? (
+            <Button
+              type="button"
+              onClick={onEndSession}
+              disabled={ending || isCompleted}
+              variant={isCompleted ? "secondary" : "danger"}
+              className="px-4 py-3"
+            >
+              {isCompleted ? "Session Ended" : ending ? "Ending..." : "End Session"}
+            </Button>
           ) : null}
         </div>
       </div>

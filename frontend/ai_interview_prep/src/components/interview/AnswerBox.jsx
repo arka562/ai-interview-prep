@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import Button from "../ui/Button.jsx";
 import Card from "../ui/Card.jsx";
 import VoiceModePanel from "./VoiceModePanel.jsx";
@@ -7,6 +9,7 @@ import useSpeechSynthesis from "../../hooks/useSpeechSynthesis.js";
 const AnswerBox = ({
   answer,
   currentQuestion,
+  disabled = false,
   generating,
   onAnswerChange,
   onGenerateNextQuestion,
@@ -19,6 +22,7 @@ const AnswerBox = ({
     error: speechError,
     isListening,
     isSupported,
+    stopListening,
     transcript,
     toggleListening,
   } = useSpeechRecognition();
@@ -26,6 +30,7 @@ const AnswerBox = ({
     error: speechSynthesisError,
     isSpeaking,
     isSupported: canReadQuestion,
+    stop: stopQuestionAudio,
     toggle: toggleQuestionAudio,
   } = useSpeechSynthesis();
 
@@ -40,6 +45,25 @@ const AnswerBox = ({
     onAnswerChange(`${answer ? `${answer.trim()} ` : ""}${transcript}`.trim());
     clearTranscript();
   };
+
+  const handleSubmit = (event) => {
+    stopListening();
+    stopQuestionAudio();
+    onSubmit(event);
+  };
+
+  const handleGenerateNextQuestion = () => {
+    stopListening();
+    stopQuestionAudio();
+    clearTranscript();
+    onGenerateNextQuestion();
+  };
+
+  useEffect(() => {
+    stopListening();
+    stopQuestionAudio();
+    clearTranscript();
+  }, [clearTranscript, currentQuestion?._id, stopListening, stopQuestionAudio]);
 
   return (
     <Card as="section" className="rounded-3xl p-6 md:p-8">
@@ -74,14 +98,15 @@ const AnswerBox = ({
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <textarea
             rows={10}
             value={answer}
             onChange={(e) => onAnswerChange(e.target.value)}
+            disabled={disabled}
             placeholder="Write your answer here or use voice input..."
-            className="w-full resize-none rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-white outline-none focus:border-indigo-500"
+            className="w-full resize-none rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-white outline-none focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
@@ -94,12 +119,13 @@ const AnswerBox = ({
           onToggleListening={toggleListening}
           onUseDraft={handleUseVoiceDraft}
           transcript={transcript}
+          disabled={disabled || submitting}
         />
 
         <div className="flex flex-wrap gap-3">
           <Button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || disabled}
             size="lg"
             className="font-semibold"
           >
@@ -108,8 +134,8 @@ const AnswerBox = ({
 
           <Button
             type="button"
-            onClick={onGenerateNextQuestion}
-            disabled={generating}
+            onClick={handleGenerateNextQuestion}
+            disabled={generating || disabled}
             variant="secondary"
             size="lg"
             className="font-semibold"

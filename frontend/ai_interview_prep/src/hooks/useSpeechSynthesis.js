@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const useSpeechSynthesis = () => {
   const [error, setError] = useState("");
@@ -14,7 +14,7 @@ const useSpeechSynthesis = () => {
     };
   }, [isSupported]);
 
-  const speak = (text) => {
+  const speak = useCallback((text) => {
     if (!isSupported) {
       setError("Text-to-speech is not supported in this browser");
       return;
@@ -47,23 +47,23 @@ const useSpeechSynthesis = () => {
     };
 
     window.speechSynthesis.speak(utterance);
-  };
+  }, [isSupported]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     if (!isSupported) return;
 
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
-  };
+  }, [isSupported]);
 
-  const toggle = (text) => {
+  const toggle = useCallback((text) => {
     if (isSpeaking) {
       stop();
       return;
     }
 
     speak(text);
-  };
+  }, [isSpeaking, speak, stop]);
 
   return {
     error,

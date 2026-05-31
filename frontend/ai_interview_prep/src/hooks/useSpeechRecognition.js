@@ -1,7 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const getSpeechRecognition = () =>
   window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const getSpeechErrorMessage = (error) => {
+  if (error === "not-allowed" || error === "service-not-allowed") {
+    return "Microphone permission was blocked. Allow microphone access in your browser settings, then try Start Voice again.";
+  }
+
+  if (error === "audio-capture") {
+    return "No microphone was found. Connect or enable a microphone, then try again.";
+  }
+
+  if (error === "network") {
+    return "Speech recognition needs a working browser speech service. Check your connection and try again.";
+  }
+
+  if (error === "no-speech") {
+    return "No speech was detected. Try speaking closer to the microphone.";
+  }
+
+  return error || "Speech recognition failed";
+};
 
 const useSpeechRecognition = () => {
   const recognitionRef = useRef(null);
@@ -36,7 +56,7 @@ const useSpeechRecognition = () => {
     };
 
     recognition.onerror = (event) => {
-      setError(event.error || "Speech recognition failed");
+      setError(getSpeechErrorMessage(event.error));
       setIsListening(false);
     };
 
@@ -66,7 +86,9 @@ const useSpeechRecognition = () => {
     return () => clearInterval(timer);
   }, [isListening]);
 
-  const startListening = () => {
+  const startListening = useCallback(() => {
+    if (isListening) return;
+
     if (!recognitionRef.current) {
       setError("Speech recognition is not supported in this browser");
       return;
@@ -75,29 +97,37 @@ const useSpeechRecognition = () => {
     setError("");
     startedAtRef.current = Date.now();
     setDurationSeconds(0);
-    recognitionRef.current.start();
-    setIsListening(true);
-  };
 
-  const stopListening = () => {
+    try {
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch {
+      setError("Could not start voice input. Please try again.");
+      startedAtRef.current = null;
+      setIsListening(false);
+    }
+  }, [isListening]);
+
+  const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
     startedAtRef.current = null;
+    setDurationSeconds(0);
     setIsListening(false);
-  };
+  }, []);
 
-  const clearTranscript = () => {
+  const clearTranscript = useCallback(() => {
     setTranscript("");
     setError("");
-  };
+  }, []);
 
-  const toggleListening = () => {
+  const toggleListening = useCallback(() => {
     if (isListening) {
       stopListening();
       return;
     }
 
     startListening();
-  };
+  }, [isListening, startListening, stopListening]);
 
   return {
     error,

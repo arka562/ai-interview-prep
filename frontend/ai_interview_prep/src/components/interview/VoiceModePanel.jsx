@@ -2,6 +2,7 @@ import Button from "../ui/Button.jsx";
 
 const VoiceModePanel = ({
   duration,
+  disabled = false,
   error,
   isListening,
   isSupported,
@@ -27,7 +28,7 @@ const VoiceModePanel = ({
         <Button
           type="button"
           onClick={onToggleListening}
-          disabled={!isSupported}
+          disabled={!isSupported || disabled}
           variant={isListening ? "danger" : "secondary"}
           size="sm"
           className="font-semibold"
