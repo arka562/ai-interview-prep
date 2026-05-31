@@ -2,6 +2,7 @@ import Button from "../ui/Button.jsx";
 import Card from "../ui/Card.jsx";
 import VoiceModePanel from "./VoiceModePanel.jsx";
 import useSpeechRecognition from "../../hooks/useSpeechRecognition.js";
+import useSpeechSynthesis from "../../hooks/useSpeechSynthesis.js";
 
 const AnswerBox = ({
   answer,
@@ -21,6 +22,12 @@ const AnswerBox = ({
     transcript,
     toggleListening,
   } = useSpeechRecognition();
+  const {
+    error: speechSynthesisError,
+    isSpeaking,
+    isSupported: canReadQuestion,
+    toggle: toggleQuestionAudio,
+  } = useSpeechSynthesis();
 
   const formattedVoiceTime = `${String(Math.floor(durationSeconds / 60)).padStart(
     2,
@@ -36,18 +43,34 @@ const AnswerBox = ({
 
   return (
     <Card as="section" className="rounded-3xl p-6 md:p-8">
-      <div className="mb-6 flex justify-between gap-4">
+      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row">
         <div>
           <p className="text-sm text-slate-400">Current Question</p>
 
           <h2 className="mt-1 text-xl font-semibold md:text-2xl">
             {currentQuestion?.question}
           </h2>
+
+          {speechSynthesisError ? (
+            <p className="mt-2 text-sm text-rose-300">{speechSynthesisError}</p>
+          ) : null}
         </div>
 
-        <div className="text-right text-sm text-slate-400">
-          <p>{currentQuestion?.type}</p>
-          <p>{currentQuestion?.difficulty}</p>
+        <div className="flex flex-col items-start gap-3 text-sm text-slate-400 md:items-end">
+          <div className="md:text-right">
+            <p>{currentQuestion?.type}</p>
+            <p>{currentQuestion?.difficulty}</p>
+          </div>
+
+          <Button
+            type="button"
+            onClick={() => toggleQuestionAudio(currentQuestion?.question)}
+            disabled={!canReadQuestion || !currentQuestion?.question}
+            variant={isSpeaking ? "danger" : "secondary"}
+            size="sm"
+          >
+            {isSpeaking ? "Stop Reading" : "Read Question"}
+          </Button>
         </div>
       </div>
 
