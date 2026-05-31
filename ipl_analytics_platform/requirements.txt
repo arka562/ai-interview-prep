@@ -1,0 +1,8 @@
+# Core data stack for the next phases of the project.
+# The current extraction pipeline uses only Python standard library.
+pandas
+duckdb
+pyarrow
+plotly
+streamlit
+scikit-learn
