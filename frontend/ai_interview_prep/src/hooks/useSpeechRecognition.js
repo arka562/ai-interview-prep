@@ -3,10 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const getSpeechRecognition = () =>
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
-const useSpeechRecognition = ({ onTranscript } = {}) => {
+const useSpeechRecognition = () => {
   const recognitionRef = useRef(null);
+  const startedAtRef = useRef(null);
+  const [durationSeconds, setDurationSeconds] = useState(0);
   const [error, setError] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
 
   const isSupported = useMemo(() => Boolean(getSpeechRecognition()), []);
 
@@ -21,14 +24,14 @@ const useSpeechRecognition = ({ onTranscript } = {}) => {
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {
-      let transcript = "";
+      let nextTranscript = "";
 
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        transcript += event.results[index][0].transcript;
+      for (let index = 0; index < event.results.length; index += 1) {
+        nextTranscript += event.results[index][0].transcript;
       }
 
-      if (transcript.trim()) {
-        onTranscript?.(transcript.trim());
+      if (nextTranscript.trim()) {
+        setTranscript(nextTranscript.trim());
       }
     };
 
@@ -47,7 +50,21 @@ const useSpeechRecognition = ({ onTranscript } = {}) => {
       recognition.stop();
       recognitionRef.current = null;
     };
-  }, [isSupported, onTranscript]);
+  }, [isSupported]);
+
+  useEffect(() => {
+    if (!isListening) return undefined;
+
+    const timer = setInterval(() => {
+      if (!startedAtRef.current) return;
+
+      setDurationSeconds(
+        Math.floor((Date.now() - startedAtRef.current) / 1000)
+      );
+    }, 500);
+
+    return () => clearInterval(timer);
+  }, [isListening]);
 
   const startListening = () => {
     if (!recognitionRef.current) {
@@ -56,13 +73,21 @@ const useSpeechRecognition = ({ onTranscript } = {}) => {
     }
 
     setError("");
+    startedAtRef.current = Date.now();
+    setDurationSeconds(0);
     recognitionRef.current.start();
     setIsListening(true);
   };
 
   const stopListening = () => {
     recognitionRef.current?.stop();
+    startedAtRef.current = null;
     setIsListening(false);
+  };
+
+  const clearTranscript = () => {
+    setTranscript("");
+    setError("");
   };
 
   const toggleListening = () => {
@@ -76,10 +101,13 @@ const useSpeechRecognition = ({ onTranscript } = {}) => {
 
   return {
     error,
+    clearTranscript,
+    durationSeconds,
     isListening,
     isSupported,
     startListening,
     stopListening,
+    transcript,
     toggleListening,
   };
 };
