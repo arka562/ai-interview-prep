@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
+import Button from "../../components/ui/Button.jsx";
 import apiClient from "../../services/apiClient.js";
+import { downloadSessionReport } from "../../utils/reportPdf.js";
 
 const SessionHistoryPage = () => {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ const SessionHistoryPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const [formData, setFormData] = useState({
     jobRole: "",
@@ -127,6 +131,51 @@ const SessionHistoryPage = () => {
       toast.error(message);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDownloadReport = async (sessionId) => {
+    try {
+      setDownloadingId(sessionId);
+
+      const { data } = await apiClient.get(`/sessions/${sessionId}`);
+      const sessionData = data?.data || data?.session || data;
+
+      await downloadSessionReport(sessionData);
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        err?.customMessage ||
+        "Failed to download report";
+
+      toast.error(message);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    const shouldDelete = window.confirm(
+      "Delete this session? This will remove the session and its questions."
+    );
+
+    if (!shouldDelete) return;
+
+    try {
+      setDeletingId(sessionId);
+      await apiClient.delete(`/sessions/${sessionId}`);
+
+      setSessions((prev) => prev.filter((session) => session._id !== sessionId));
+      toast.success("Session deleted");
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        err?.customMessage ||
+        "Failed to delete session";
+
+      toast.error(message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -300,16 +349,29 @@ const SessionHistoryPage = () => {
           ) : (
             <div className="space-y-4">
               {sessions.map((session) => (
-                <Link
+                <div
                   key={session._id}
-                  to={`/interview/session/${session._id}`}
-                  className="block rounded-2xl border border-slate-800 bg-slate-950/60 hover:border-indigo-500 transition-all p-5"
+                  className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5 transition-all hover:border-indigo-500"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                      <h3 className="text-xl font-semibold">
-                        {session.jobRole}
-                      </h3>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-xl font-semibold">
+                          {session.jobRole}
+                        </h3>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            session.status === "completed"
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : session.status === "paused"
+                              ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                              : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                          }`}
+                        >
+                          {session.status || "active"}
+                        </span>
+                      </div>
 
                       <p className="text-slate-400 mt-2">
                         {session.experienceLevel} •{" "}
@@ -330,19 +392,7 @@ const SessionHistoryPage = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-start lg:items-end gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          session.status === "completed"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : session.status === "paused"
-                            ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                            : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                        }`}
-                      >
-                        {session.status}
-                      </span>
-
+                    <div className="flex flex-col items-start gap-3 lg:items-end">
                       <p className="text-sm text-slate-400">
                         Questions:{" "}
                         {session.questions?.length || 0}
@@ -352,9 +402,49 @@ const SessionHistoryPage = () => {
                         Score:{" "}
                         {Math.round(session.score || 0)}
                       </p>
+
+                      <div className="flex flex-wrap gap-2 lg:justify-end">
+                        {session.status !== "completed" ? (
+                          <Link
+                            to={`/interview/session/${session._id}`}
+                            className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-500"
+                          >
+                            Continue
+                          </Link>
+                        ) : null}
+
+                        <Link
+                          to={`/interview/details/${session._id}`}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 transition-all hover:border-indigo-500 hover:text-white"
+                        >
+                          View Details
+                        </Link>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleDownloadReport(session._id)}
+                          disabled={downloadingId === session._id}
+                        >
+                          {downloadingId === session._id
+                            ? "Preparing..."
+                            : "Download Report"}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDeleteSession(session._id)}
+                          disabled={deletingId === session._id}
+                        >
+                          {deletingId === session._id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}

@@ -139,7 +139,10 @@ export const deleteSession = asyncHandler(async (req, res) => {
     return res.status(403).json({ success: false, message: "Not authorized" });
   }
 
-  await Question.deleteMany({ session: session._id });
+  await Promise.all([
+    Question.deleteMany({ session: session._id }),
+    AnswerAttempt.deleteMany({ session: session._id, user: req.user._id }),
+  ]);
   await session.deleteOne();
 
   res.json({ success: true, message: "Session deleted" });
