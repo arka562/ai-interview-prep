@@ -34,8 +34,16 @@ const app = express();
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
-const allowedOrigins = [
+const envOrigins = [
   process.env.CLIENT_URL,
+  ...(process.env.CLIENT_URLS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
+
+const allowedOrigins = [
+  ...envOrigins,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ].filter(Boolean);
