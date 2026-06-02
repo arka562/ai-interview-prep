@@ -54,7 +54,9 @@ export const createSession = asyncHandler(async (req, res) => {
       questions.map((q) => ({
         session: sessionId,
         question: q.question,
-        answer: q.answer || "",
+        type: q.type || "technical",
+        difficulty: q.difficulty || difficulty || "medium",
+        idealAnswer: q.idealAnswer || q.answer || "",
       })),
       { session: dbSession }
     );
@@ -91,7 +93,7 @@ export const getSessionById = asyncHandler(async (req, res) => {
     user: req.user._id,
   }).populate({
     path: "questions",
-    select: "question answer pinned createdAt",
+    select: "question type difficulty idealAnswer userNotes pinned createdAt",
     options: { sort: { pinned: -1, createdAt: 1 } },
   });
 

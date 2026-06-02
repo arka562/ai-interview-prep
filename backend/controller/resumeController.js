@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import mongoose from "mongoose";
 import Session from "../model/Session.js";
 import Question from "../model/Question.js";
-import ResumeProfile from "../model/ResumeProfile.js";
+import ResumeProfile from "../model/resumeProfile.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
   extractResumeText,

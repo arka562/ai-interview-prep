@@ -276,6 +276,13 @@ export const evaluateAnswer = asyncHandler(async (req, res) => {
     });
   }
 
+  if (session.status === "completed") {
+    return res.status(400).json({
+      success: false,
+      message: "Cannot evaluate answers for a completed session",
+    });
+  }
+
   const question = await Question.findOne({
     _id: questionId,
     session: sessionId,

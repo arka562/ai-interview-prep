@@ -41,6 +41,7 @@ apiClient.interceptors.response.use(
     // UNAUTHORIZED
     if (error?.response?.status === 401) {
       localStorage.removeItem("userInfo");
+      localStorage.removeItem("token");
 
       if (
         window.location.pathname !== "/login" &&

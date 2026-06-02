@@ -104,6 +104,13 @@ export const getNextAdaptiveQuestion = asyncHandler(async (req, res) => {
     });
   }
 
+  if (session.status === "completed") {
+    return res.status(400).json({
+      success: false,
+      message: "Cannot generate questions for a completed session",
+    });
+  }
+
   const skillProfile = await SkillProfile.findOne({ user: req.user._id });
 
   const lastAttempt = await AnswerAttempt.findOne({
