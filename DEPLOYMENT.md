@@ -1,14 +1,17 @@
-# Deployment: Netlify + Koyeb
+# Deployment: Netlify + Render
 
-## Backend on Koyeb
+## Backend on Render
 
 1. Push this repository to GitHub.
-2. In Koyeb, create a new Web Service from the GitHub repo.
-3. Set the service root directory to `backend`.
-4. Use Node.js/buildpack deployment.
-5. Set the run command to `npm start`.
-6. Add environment variables from `backend/.env.example`.
-7. After deploy, copy the Koyeb public URL.
+2. In Render, create a new Web Service from the GitHub repo.
+3. Set the root directory to `backend`.
+4. Use these settings:
+   - Runtime: Node
+   - Build command: `npm install`
+   - Start command: `npm start`
+   - Instance type: Free
+5. Add environment variables from `backend/.env.example`.
+6. After deploy, copy the Render public URL.
 
 Required backend variables:
 
@@ -34,19 +37,19 @@ GEMINI_API_KEY=...
 4. Add this environment variable:
 
 ```txt
-VITE_API_BASE_URL=https://your-koyeb-backend.koyeb.app/api/v1
+VITE_API_BASE_URL=https://your-render-backend.onrender.com/api/v1
 ```
 
 5. Deploy the frontend.
-6. Copy the Netlify URL and set it as `CLIENT_URL` in Koyeb.
-7. Redeploy/restart the Koyeb backend after changing `CLIENT_URL`.
+6. Copy the Netlify URL and set it as `CLIENT_URL` in Render.
+7. Redeploy/restart the Render backend after changing `CLIENT_URL`.
 
 ## MongoDB Atlas
 
-Make sure Koyeb can connect:
+Make sure Render can connect:
 
 - Database user/password are correct.
-- Network access allows Koyeb. For a demo project, `0.0.0.0/0` is the simplest setting.
+- Network access allows Render. For a demo project, `0.0.0.0/0` is the simplest setting.
 
 ## Local Development
 
