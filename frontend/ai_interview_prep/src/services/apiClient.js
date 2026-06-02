@@ -1,11 +1,9 @@
-// src/services/apiClient.js
-
 import axios from "axios";
 import toast from "react-hot-toast";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:5000/api/v1";
+  "https://ai-interview-prep-b1rv.onrender.com/api/v1";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -15,7 +13,6 @@ const apiClient = axios.create({
   },
 });
 
-// REQUEST INTERCEPTOR
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -29,7 +26,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// RESPONSE INTERCEPTOR
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -38,7 +34,6 @@ apiClient.interceptors.response.use(
       error?.message ||
       "Something went wrong";
 
-    // UNAUTHORIZED
     if (error?.response?.status === 401) {
       localStorage.removeItem("userInfo");
       localStorage.removeItem("token");
@@ -48,13 +43,11 @@ apiClient.interceptors.response.use(
         window.location.pathname !== "/register"
       ) {
         toast.error("Session expired. Please login again.");
-
         window.location.href = "/login";
       }
     }
 
     error.customMessage = message;
-
     return Promise.reject(error);
   }
 );
