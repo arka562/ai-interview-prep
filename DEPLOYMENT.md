@@ -1,15 +1,14 @@
-# Deployment: Netlify + Railway
+# Deployment: Netlify + Koyeb
 
-## Backend on Railway
+## Backend on Koyeb
 
 1. Push this repository to GitHub.
-2. In Railway, create a new project from the GitHub repo.
+2. In Koyeb, create a new Web Service from the GitHub repo.
 3. Set the service root directory to `backend`.
-4. Railway should use:
-   - Build: Nixpacks
-   - Start command: `npm start`
-5. Add environment variables from `backend/.env.example`.
-6. After deploy, copy the Railway public URL.
+4. Use Node.js/buildpack deployment.
+5. Set the run command to `npm start`.
+6. Add environment variables from `backend/.env.example`.
+7. After deploy, copy the Koyeb public URL.
 
 Required backend variables:
 
@@ -35,19 +34,19 @@ GEMINI_API_KEY=...
 4. Add this environment variable:
 
 ```txt
-VITE_API_BASE_URL=https://your-railway-backend.up.railway.app/api/v1
+VITE_API_BASE_URL=https://your-koyeb-backend.koyeb.app/api/v1
 ```
 
 5. Deploy the frontend.
-6. Copy the Netlify URL and set it as `CLIENT_URL` in Railway.
-7. Redeploy/restart the Railway backend after changing `CLIENT_URL`.
+6. Copy the Netlify URL and set it as `CLIENT_URL` in Koyeb.
+7. Redeploy/restart the Koyeb backend after changing `CLIENT_URL`.
 
 ## MongoDB Atlas
 
-Make sure Railway can connect:
+Make sure Koyeb can connect:
 
 - Database user/password are correct.
-- Network access allows Railway. For a demo project, `0.0.0.0/0` is the simplest setting.
+- Network access allows Koyeb. For a demo project, `0.0.0.0/0` is the simplest setting.
 
 ## Local Development
 
