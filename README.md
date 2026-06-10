@@ -31,7 +31,7 @@ https://meek-kheer-3f184f.netlify.app/login
 
 Backend:
 
-https://your-backend-url.onrender.com
+https://ai-interview-prep-b1rv.onrender.com/
 
 ---
 
