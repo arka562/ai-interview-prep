@@ -8,11 +8,14 @@
 <img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
 <img src="https://img.shields.io/badge/Google-Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white" />
 
+![GitHub stars](https://img.shields.io/github/stars/arka562/ai-interview-prep)
+![GitHub forks](https://img.shields.io/github/forks/arka562/ai-interview-prep)
+![GitHub issues](https://img.shields.io/github/issues/arka562/ai-interview-prep)
+![GitHub license](https://img.shields.io/github/license/arka562/ai-interview-prep)
+
 ### 🎯 Ace Your Next Interview with AI
 
-Generate personalized interview questions, get AI-powered evaluations, track your progress, and prepare confidently for technical interviews.
-
----
+Generate personalized interview questions, receive AI-powered evaluations, analyze resumes, track progress, and prepare confidently for technical interviews.
 
 ⭐ Star this repository if you find it useful!
 
@@ -20,77 +23,146 @@ Generate personalized interview questions, get AI-powered evaluations, track you
 
 ---
 
-## 📖 Overview
+# 🌐 Live Demo
 
-AI Interview Prep is a full-stack MERN application that helps users prepare for interviews using AI-powered question generation and answer evaluation.
+Frontend:
 
-Users can create interview sessions based on their target role, experience level, and preferred topics. The application generates tailored interview questions using Google Gemini AI and provides intelligent feedback on submitted answers.
+https://meek-kheer-3f184f.netlify.app/login
 
-Whether you're preparing for your first internship or your next senior engineering role, AI Interview Prep helps you practice effectively.
+Backend:
+
+https://your-backend-url.onrender.com
 
 ---
 
-## ✨ Features
+# 📖 Overview
 
-### 🤖 AI-Powered Interview Questions
+AI Interview Coach is a full-stack MERN application that helps students, freshers, and professionals prepare for interviews using AI-powered question generation, answer evaluation, resume analysis, and performance tracking.
+
+The platform leverages Google Gemini AI to simulate realistic interview experiences tailored to a candidate’s role, experience level, and skill set.
+
+Whether you're preparing for internships, placements, software engineering roles, or experienced developer positions, AI Interview Coach provides a personalized learning environment.
+
+---
+
+# ✨ Features
+
+## 🤖 AI-Powered Interview Questions
 
 * Generate role-specific interview questions
 * Personalized according to experience level
 * Covers multiple technical domains
+* Dynamic question generation using Gemini AI
 
-### 📝 AI Answer Evaluation
+## 🎯 Adaptive Follow-Up Questions
+
+* Generates deeper questions based on user answers
+* Simulates real interviewer behavior
+* Personalized interview flow
+
+## 📝 AI Answer Evaluation
 
 * Evaluate user responses
 * Detailed explanations and feedback
-* Identify strengths and improvement areas
+* Identify strengths and weaknesses
+* Improvement recommendations
 
-### 🔐 Secure Authentication
+## 📄 Resume Analyzer
+
+* Upload Resume PDF
+* Resume Parsing
+* AI-Powered Resume Analysis
+* ATS Score Generation
+* Resume Improvement Suggestions
+
+## 📑 PDF Report Generation
+
+* Download complete interview reports
+* AI-generated feedback summaries
+* Performance insights
+* Skill assessment reports
+
+## 📊 Performance Analytics
+
+* Track interview performance
+* Topic-wise progress monitoring
+* Historical performance analysis
+* Improvement trend visualization
+
+## 🔐 Secure Authentication
 
 * JWT-based authentication
 * User registration and login
 * Protected routes
+* Secure session management
 
-### 👤 User Profile Management
+## 👤 User Profile Management
 
 * Profile image upload
-* User profile customization
+* User customization
 * Account management
 
-### 📂 Session Management
+## 📂 Session Management
 
 * Create interview sessions
-* View previous sessions
-* Track interview history
+* View interview history
+* Resume previous sessions
+* Delete sessions
 
-### 📌 Question Pinning
+## 📌 Question Pinning
 
 * Save important questions
-* Quick access for revision
+* Quick revision access
 
-### 📒 Personal Notes
+## 📒 Personal Notes
 
-* Add custom notes to questions
-* Maintain personalized learning material
-
-### 📊 Progress Tracking
-
-* Review past interviews
-* Monitor improvement over time
+* Add notes to interview questions
+* Personalized learning materials
 
 ---
 
-## 🛠️ Tech Stack
+# 🎯 Highlights
 
-### Frontend
+This project demonstrates:
 
-| Technology   | Purpose                     |
-| ------------ | --------------------------- |
-| React.js     | User Interface              |
-| Vite         | Fast Development Build Tool |
-| Axios        | API Communication           |
-| CSS/Tailwind | Styling                     |
+✅ Full Stack MERN Development
 
-### Backend
+✅ Gemini AI Integration
+
+✅ Authentication & Authorization
+
+✅ RESTful API Design
+
+✅ MongoDB Data Modeling
+
+✅ Resume Analysis
+
+✅ PDF Report Generation
+
+✅ Cloud Deployment
+
+✅ File Upload Handling
+
+✅ Real-World Scalable Architecture
+
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+
+| Technology   | Purpose           |
+| ------------ | ----------------- |
+| React.js     | User Interface    |
+| Vite         | Build Tool        |
+| Axios        | API Communication |
+| React Router | Routing           |
+| Tailwind CSS | Styling           |
+| Context API  | State Management  |
+
+---
+
+## Backend
 
 | Technology | Purpose             |
 | ---------- | ------------------- |
@@ -99,15 +171,23 @@ Whether you're preparing for your first internship or your next senior engineeri
 | MongoDB    | Database            |
 | Mongoose   | ODM                 |
 | JWT        | Authentication      |
-| Multer     | Image Uploads       |
+| Multer     | File Uploads        |
+| Bcrypt     | Password Hashing    |
 
-### AI Integration
+---
 
-| Technology        | Purpose                          |
-| ----------------- | -------------------------------- |
-| Google Gemini API | Question Generation & Evaluation |
+## AI Integration
 
-### Deployment
+| Technology        | Purpose             |
+| ----------------- | ------------------- |
+| Google Gemini API | Question Generation |
+| Google Gemini API | Answer Evaluation   |
+| Google Gemini API | Resume Analysis     |
+| Google Gemini API | ATS Scoring         |
+
+---
+
+## Deployment
 
 | Service       | Purpose          |
 | ------------- | ---------------- |
@@ -117,52 +197,135 @@ Whether you're preparing for your first internship or your next senior engineeri
 
 ---
 
-## 📸 Screenshots
+# 📈 Project Scale
 
-### Home Page
-
-(Add Screenshot Later)
-
-### AI Interview Generation
-
-(Add Screenshot Later)
-
-### Answer Evaluation
-
-(Add Screenshot Later)
-
-### Session History
-
-(Add Screenshot Later)
-
-### User Dashboard
-
-(Add Screenshot Later)
+* 20+ REST APIs
+* JWT Authentication System
+* AI Interview Generation
+* AI Resume Analysis
+* PDF Report Generation
+* MongoDB Atlas Integration
+* Cloud Deployment
+* File Upload Management
+* Analytics Dashboard
 
 ---
 
-## 🏗️ System Architecture
+# 📸 Screenshots
+
+## Login Page
+
+(Add Screenshot)
+
+## Dashboard
+
+(Add Screenshot)
+
+## AI Interview Generation
+
+(Add Screenshot)
+
+## Answer Evaluation
+
+(Add Screenshot)
+
+## Resume Analyzer
+
+(Add Screenshot)
+
+## Session History
+
+(Add Screenshot)
+
+## Analytics Dashboard
+
+(Add Screenshot)
+
+---
+
+# 🏗️ System Architecture
 
 ```text
-┌────────────────────┐
-│    React Frontend   │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│   Express Backend   │
-└─────────┬──────────┘
-          │
-    ┌─────┴─────┐
-    ▼           ▼
+                     ┌──────────────────────┐
+                     │    React Frontend    │
+                     └──────────┬───────────┘
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │   Express Backend    │
+                     └──────────┬───────────┘
+                                │
+             ┌──────────────────┼──────────────────┐
+             ▼                  ▼                  ▼
 
-MongoDB      Gemini AI
- Atlas        API
+      MongoDB Atlas       Gemini AI API      PDF Generator
+
+             ▲
+             │
+
+      Analytics Engine
 ```
 
 ---
 
-## 📁 Project Structure
+# 🔄 Application Flow
+
+```text
+User
+ │
+ ▼
+Login/Register
+ │
+ ▼
+Create Interview Session
+ │
+ ▼
+Gemini AI Generates Questions
+ │
+ ▼
+User Answers Questions
+ │
+ ▼
+AI Evaluates Answers
+ │
+ ▼
+Generate Feedback
+ │
+ ▼
+Store Results in MongoDB
+ │
+ ▼
+Analytics Dashboard
+ │
+ ▼
+PDF Report Export
+```
+
+---
+
+# 🗄️ Database Design
+
+```text
+Users
+│
+├── Profile
+│
+├── Sessions
+│   ├── Questions
+│   ├── Answers
+│   ├── Notes
+│   └── Feedback
+│
+├── Resume Reports
+│
+├── Skill Profiles
+│
+└── Analytics
+```
+
+---
+
+# 📁 Project Structure
 
 ```text
 ai-interview-prep/
@@ -170,9 +333,10 @@ ai-interview-prep/
 ├── backend/
 │   ├── config/
 │   ├── controllers/
-│   ├── middlewares/
+│   ├── middleware/
 │   ├── models/
 │   ├── routes/
+│   ├── services/
 │   ├── utils/
 │   └── server.js
 │
@@ -182,19 +346,23 @@ ai-interview-prep/
 │       │   ├── components/
 │       │   ├── pages/
 │       │   ├── context/
+│       │   ├── services/
+│       │   ├── hooks/
 │       │   └── assets/
+│       │
 │       ├── public/
 │       └── vite.config.js
 │
+├── README.md
 ├── DEPLOYMENT.md
-└── README.md
+└── LICENSE
 ```
 
 ---
 
-## ⚙️ Installation
+# ⚙️ Installation
 
-### Clone the Repository
+## Clone Repository
 
 ```bash
 git clone https://github.com/arka562/ai-interview-prep.git
@@ -204,9 +372,7 @@ cd ai-interview-prep
 
 ---
 
-## 🔧 Backend Setup
-
-Navigate to backend:
+# 🔧 Backend Setup
 
 ```bash
 cd backend
@@ -218,7 +384,7 @@ Install dependencies:
 npm install
 ```
 
-Create a `.env` file:
+Create `.env`
 
 ```env
 PORT=5000
@@ -232,7 +398,7 @@ CLIENT_URL=http://localhost:5173
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-Start backend:
+Run backend:
 
 ```bash
 npm run dev
@@ -240,9 +406,7 @@ npm run dev
 
 ---
 
-## 🎨 Frontend Setup
-
-Navigate to frontend:
+# 🎨 Frontend Setup
 
 ```bash
 cd frontend/ai_interview_prep
@@ -254,19 +418,19 @@ Install dependencies:
 npm install
 ```
 
-Create a `.env` file:
+Create `.env`
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api/v1
 ```
 
-Start frontend:
+Run frontend:
 
 ```bash
 npm run dev
 ```
 
-Application runs at:
+Application:
 
 ```text
 http://localhost:5173
@@ -274,31 +438,31 @@ http://localhost:5173
 
 ---
 
-## 🌐 API Endpoints
+# 🌐 API Endpoints
 
-### Authentication
+## Authentication
 
 | Method | Endpoint               | Description          |
 | ------ | ---------------------- | -------------------- |
 | POST   | /api/auth/register     | Register User        |
 | POST   | /api/auth/login        | Login User           |
-| GET    | /api/auth/profile      | Get Profile          |
+| GET    | /api/auth/profile      | Get User Profile     |
 | POST   | /api/auth/upload-image | Upload Profile Image |
 
 ---
 
-### Interview Sessions
+## Interview Sessions
 
-| Method | Endpoint                  | Description         |
-| ------ | ------------------------- | ------------------- |
-| POST   | /api/sessions/create      | Create Session      |
-| GET    | /api/sessions/my-sessions | Get User Sessions   |
-| GET    | /api/sessions/:id         | Get Session Details |
-| DELETE | /api/sessions/:id         | Delete Session      |
+| Method | Endpoint                  | Description       |
+| ------ | ------------------------- | ----------------- |
+| POST   | /api/sessions/create      | Create Session    |
+| GET    | /api/sessions/my-sessions | Get User Sessions |
+| GET    | /api/sessions/:id         | Session Details   |
+| DELETE | /api/sessions/:id         | Delete Session    |
 
 ---
 
-### Questions
+## Questions
 
 | Method | Endpoint            | Description          |
 | ------ | ------------------- | -------------------- |
@@ -308,83 +472,74 @@ http://localhost:5173
 
 ---
 
-### AI Services
+## AI Services
 
-| Method | Endpoint                     | Description        |
-| ------ | ---------------------------- | ------------------ |
-| POST   | /api/ai/generate-questions   | Generate Questions |
-| POST   | /api/ai/generate-explanation | Evaluate Answers   |
-
----
-
-## 🎯 How It Works
-
-### Step 1
-
-Create an interview session by selecting:
-
-* Job Role
-* Experience Level
-* Topics
-
-### Step 2
-
-Gemini AI generates personalized interview questions.
-
-### Step 3
-
-Answer the generated questions.
-
-### Step 4
-
-Receive AI-generated evaluation and feedback.
-
-### Step 5
-
-Save the session and review it later.
+| Method | Endpoint                     | Description          |
+| ------ | ---------------------------- | -------------------- |
+| POST   | /api/ai/generate-questions   | Generate Questions   |
+| POST   | /api/ai/generate-explanation | Evaluate Answers     |
+| POST   | /api/ai/resume-analysis      | Resume Analysis      |
+| POST   | /api/ai/ats-score            | ATS Score Generation |
 
 ---
 
-## 🚀 Deployment
+# 🔒 Security Features
 
-### Backend Deployment (Render)
+* JWT Authentication
+* Bcrypt Password Hashing
+* Protected Routes
+* Input Validation
+* Secure File Uploads
+* Environment Variable Protection
+* MongoDB Atlas Security
 
-1. Create a Render Web Service.
-2. Connect GitHub repository.
-3. Set Root Directory:
+---
+
+# 🚀 Deployment
+
+## Backend Deployment (Render)
+
+1. Create Render Web Service
+2. Connect GitHub Repository
+3. Set Root Directory
 
 ```text
 backend
 ```
 
-4. Build Command:
+4. Build Command
 
 ```bash
 npm install
 ```
 
-5. Start Command:
+5. Start Command
 
 ```bash
 npm start
 ```
 
-6. Add environment variables.
+6. Add Environment Variables
 
 ---
 
-### Frontend Deployment (Netlify)
+## Frontend Deployment (Netlify)
 
-Build Settings:
-
-```bash
 Base Directory:
+
+```text
 frontend/ai_interview_prep
+```
 
 Build Command:
+
+```bash
 npm run build
+```
 
 Publish Directory:
+
+```text
 dist
 ```
 
@@ -396,91 +551,129 @@ VITE_API_BASE_URL=https://your-backend-url.onrender.com/api/v1
 
 ---
 
-## 🔮 Future Enhancements
+# 🚧 Challenges Faced
 
-* Voice-Based Mock Interviews
-* Coding Interview Simulator
-* Resume Analyzer
-* ATS Resume Scoring
-* Leaderboard System
-* Interview Performance Analytics
-* Multi-AI Provider Support
-* OpenAI Integration
-* Anthropic Integration
-* Dark Mode
-* Mobile Application
+* Parsing AI-generated responses
+* Managing interview session state
+* Structuring dynamic AI outputs
+* Optimizing Gemini API requests
+* Handling resume extraction
+* Generating ATS reports
+* Maintaining data consistency
+* Secure deployment and environment management
 
 ---
 
-## 🤝 Contributing
+# 📚 Key Learnings
+
+* Full Stack MERN Development
+* REST API Architecture
+* MongoDB Data Modeling
+* JWT Authentication
+* Gemini AI Integration
+* File Upload Management
+* Cloud Deployment
+* State Management
+* Resume Processing
+* Analytics Development
+
+---
+
+# 🔮 Future Scope
+
+* Real-Time Voice Interviews
+* Video Interview Analysis
+* AI Career Roadmaps
+* Coding Interview Simulator
+* System Design Interview Module
+* Company-Specific Interview Preparation
+* AI Mock HR Interviews
+* Multi-Language Support
+* OpenAI Integration
+* Anthropic Integration
+* Mobile App (React Native)
+* Dark Mode Support
+
+---
+
+# 🤝 Contributing
 
 Contributions are welcome.
 
-### Steps
+## Steps
 
-```bash
-Fork Repository
+```text
+1. Fork Repository
 
-Clone Repository
+2. Clone Repository
 
-Create New Branch
+3. Create New Branch
 
-Make Changes
+4. Make Changes
 
-Commit Changes
+5. Commit Changes
 
-Push Changes
+6. Push Changes
 
-Open Pull Request
+7. Open Pull Request
 ```
 
 ---
 
-## 🐛 Report Issues
+# 🐛 Report Issues
 
 Found a bug?
 
-Create an issue and provide:
+Please create an issue with:
 
 * Description
-* Steps to Reproduce
+* Reproduction Steps
 * Expected Behavior
 * Screenshots
 
 ---
 
-## 💡 Why This Project?
+# 💡 Why This Project?
 
-Most interview preparation platforms provide static question banks.
+Most interview preparation platforms rely on static question banks.
 
-AI Interview Prep provides:
+AI Interview Coach provides:
 
 ✅ Dynamic AI-generated interviews
 
 ✅ Personalized question sets
 
+✅ Resume Analysis
+
+✅ ATS Score Generation
+
 ✅ AI-powered answer evaluation
 
 ✅ Session history tracking
 
-✅ User-friendly interface
+✅ Performance analytics
 
-✅ Full-stack scalable architecture
+✅ Real-time feedback
 
 ---
 
-## 👨‍💻 Author
+# 👨‍💻 Author
 
-### Arkaprava
+## Arkaprava Ghosh
 
 MERN Stack Developer | Full Stack Developer | AI Enthusiast
 
 GitHub:
+
 https://github.com/arka562
+
+LinkedIn:
+
+(Add LinkedIn URL)
 
 ---
 
-## ⭐ Show Your Support
+# ⭐ Show Your Support
 
 If this project helped you:
 
@@ -492,11 +685,11 @@ If this project helped you:
 📢 Share with Others
 ```
 
-Every star motivates further development.
+Every star motivates future development.
 
 ---
 
-## 📄 License
+# 📄 License
 
 This project is licensed under the MIT License.
 
@@ -506,12 +699,12 @@ This project is licensed under the MIT License.
 
 # 🚀 Ready to Crack Your Next Interview?
 
-Practice smarter.
-Learn faster.
-Get hired sooner.
+Practice Smarter.
+Learn Faster.
+Get Hired Sooner.
 
 Built with ❤️ using React, Node.js, MongoDB, and Gemini AI.
 
-⭐ Star the repository and support the project!
+⭐ Star the repository and support the project.
 
 </div>
